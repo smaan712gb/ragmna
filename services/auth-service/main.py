@@ -28,8 +28,26 @@ ACCESS_TOKEN_EXPIRY = int(os.getenv('ACCESS_TOKEN_EXPIRY_MINUTES', 60))  # 60 mi
 REFRESH_TOKEN_EXPIRY = int(os.getenv('REFRESH_TOKEN_EXPIRY_DAYS', 7))  # 7 days
 SERVICE_API_KEY = os.getenv('SERVICE_API_KEY')
 
-# CORS configuration
-ALLOWED_ORIGINS = os.getenv('ALLOWED_ORIGINS', 'http://localhost:3000').split(',')
+# CORS configuration with enhanced security validation
+ALLOWED_ORIGINS_RAW = os.getenv('ALLOWED_ORIGINS', '')
+if not ALLOWED_ORIGINS_RAW:
+    logger.critical("ALLOWED_ORIGINS environment variable is not set!")
+    logger.critical("Using localhost fallback - THIS IS NOT SAFE FOR PRODUCTION")
+    ALLOWED_ORIGINS = ['http://localhost:3000']
+else:
+    ALLOWED_ORIGINS = [origin.strip() for origin in ALLOWED_ORIGINS_RAW.split(',') if origin.strip()]
+    logger.info(f"CORS configured for {len(ALLOWED_ORIGINS)} origin(s): {ALLOWED_ORIGINS}")
+    
+    # Validate origins in production environment
+    env_mode = os.getenv('ENV', os.getenv('ENVIRONMENT', 'development')).lower()
+    if env_mode == 'production' or os.getenv('PRODUCTION_MODE', '').lower() == 'true':
+        for origin in ALLOWED_ORIGINS:
+            if 'localhost' in origin or '127.0.0.1' in origin:
+                logger.critical(f"PRODUCTION ERROR: localhost origin not allowed in production: {origin}")
+                raise ValueError(f"localhost/127.0.0.1 origins are not permitted in production environment")
+            if not origin.startswith('https://'):
+                logger.warning(f"PRODUCTION WARNING: Non-HTTPS origin detected: {origin}")
+
 CORS(app, resources={
     r"/*": {
         "origins": ALLOWED_ORIGINS,
@@ -193,6 +211,29 @@ def require_role(required_role: str):
             return f(*args, **kwargs)
         return decorated_function
     return decorator
+
+# Security Headers Middleware
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to all responses"""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    
+    # Add HSTS header only for HTTPS connections
+    if request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    
+    return response
+
+# Origin Validation Middleware
+@app.before_request
+def validate_origin():
+    """Log and validate request origins"""
+    origin = request.headers.get('Origin')
+    if origin:
+        if origin not in ALLOWED_ORIGINS:
+            logger.warning(f"Request from unauthorized origin: {origin} - Method: {request.method} - Path: {request.path}")
 
 # API Endpoints
 

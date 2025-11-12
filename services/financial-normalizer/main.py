@@ -20,6 +20,7 @@ try:
     import vertexai
     from vertexai.generative_models import GenerativeModel, Part
     from vertexai.preview import caching
+    from google.oauth2 import service_account
     VERTEX_AVAILABLE = True
 except ImportError:
     VERTEX_AVAILABLE = False
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 SERVICE_API_KEY = os.getenv('SERVICE_API_KEY', 'dev-key')
 VERTEX_PROJECT = os.getenv('PROJECT_ID') or os.getenv('VERTEX_PROJECT')
 VERTEX_LOCATION = os.getenv('VERTEX_AI_LOCATION') or os.getenv('VERTEX_LOCATION', 'us-west1')
+GOOGLE_CLOUD_KEY_PATH = os.getenv('GOOGLE_CLOUD_KEY_PATH') or os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
 class FinancialNormalizer:
     """Uses Gemini 2.5 Pro with Code Execution for financial normalization"""
@@ -44,7 +46,27 @@ class FinancialNormalizer:
         """Initialize Vertex AI on first use"""
         if not self.vertex_initialized and VERTEX_PROJECT:
             try:
-                vertexai.init(project=VERTEX_PROJECT, location=VERTEX_LOCATION)
+                # Load credentials from service account key if provided
+                credentials = None
+                if GOOGLE_CLOUD_KEY_PATH and os.path.exists(GOOGLE_CLOUD_KEY_PATH):
+                    try:
+                        credentials = service_account.Credentials.from_service_account_file(
+                            GOOGLE_CLOUD_KEY_PATH
+                        )
+                        logger.info(f"Loaded GCP credentials from {GOOGLE_CLOUD_KEY_PATH}")
+                    except Exception as cred_error:
+                        logger.warning(f"Could not load credentials from file: {cred_error}")
+                
+                # Initialize Vertex AI with or without explicit credentials
+                if credentials:
+                    vertexai.init(
+                        project=VERTEX_PROJECT, 
+                        location=VERTEX_LOCATION,
+                        credentials=credentials
+                    )
+                else:
+                    vertexai.init(project=VERTEX_PROJECT, location=VERTEX_LOCATION)
+                
                 self.model = GenerativeModel(
                     'gemini-2.5-pro',
                     system_instruction="""
@@ -61,9 +83,9 @@ Always cite specific SEC filing sections for each adjustment.
 """
                 )
                 self.vertex_initialized = True
-                logger.info("Vertex AI initialized successfully")
+                logger.info(f"✅ Vertex AI initialized successfully for project {VERTEX_PROJECT}")
             except Exception as e:
-                logger.error(f"Failed to initialize Vertex AI: {e}")
+                logger.error(f"❌ Failed to initialize Vertex AI: {e}")
                 self.vertex_initialized = False
 
     def normalize_financials(self, symbol: str, financials: dict,

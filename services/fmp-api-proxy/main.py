@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 FMP_API_KEY = os.getenv('FMP_API_KEY')
 FMP_BASE_URL = "https://financialmodelingprep.com/stable"
+FMP_API_V4_BASE = "https://financialmodelingprep.com/api/v4"
 
 # Rate limiting
 REQUESTS_PER_MINUTE = 300
@@ -147,6 +148,33 @@ class FMPProxy:
             return self._make_request(f"sec-filings-search/form-type?formType={form_type}&limit={limit}")
         else:
             return self._make_request(f"sec-filings-financials?from=2024-01-01&to=2024-12-31&page=0&limit={limit}")
+
+    def get_stock_peers(self, symbol: str) -> Dict[str, Any]:
+        """Get peer companies for a stock using API v4"""
+        # Use API v4 for stock peers
+        url = f"{FMP_API_V4_BASE}/stock_peers"
+        params = {
+            'symbol': symbol,
+            'apikey': FMP_API_KEY
+        }
+        
+        try:
+            if not self._check_rate_limit():
+                raise Exception("Rate limit exceeded")
+            
+            response = self.session.get(url, params=params, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            
+            # API v4 returns [{"symbol": "XXX", "peersList": ["PEER1", "PEER2", ...]}]
+            if isinstance(data, list) and len(data) > 0:
+                peers_list = data[0].get('peersList', [])
+                return {'peers': peers_list}
+            
+            return {'peers': []}
+        except Exception as e:
+            logger.error(f"FMP API v4 peers request failed: {e}")
+            return {'peers': []}
 
     def get_news(self, symbol: str = None, limit: int = 50) -> Dict[str, Any]:
         """Get news articles"""
@@ -315,6 +343,43 @@ def get_sec_filings():
         return jsonify(data)
     except Exception as e:
         logger.error(f"Error getting SEC filings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/peers', methods=['GET'])
+@require_api_key
+def get_peers():
+    """Get peer companies"""
+    try:
+        symbol = request.args.get('symbol')
+        if not symbol:
+            return jsonify({'error': 'symbol parameter required'}), 400
+
+        data = fmp_proxy.get_stock_peers(symbol.upper())
+        # FMP returns array directly, wrap it in object with 'peers' key
+        if isinstance(data, list):
+            return jsonify({'peers': data})
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error getting peers for {symbol}: {e}")
+        return jsonify({'error': str(e), 'peers': []}), 200  # Return empty peers on error
+
+@app.route('/stock-screener', methods=['GET'])
+@require_api_key
+def stock_screener():
+    """Stock screener endpoint"""
+    try:
+        filters = {}
+        if request.args.get('industry'):
+            filters['industry'] = request.args.get('industry')
+        if request.args.get('sector'):
+            filters['sector'] = request.args.get('sector')
+        if request.args.get('limit'):
+            filters['limit'] = int(request.args.get('limit'))
+        
+        data = fmp_proxy.get_stock_screener(filters)
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Error in stock screener: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/news', methods=['GET'])

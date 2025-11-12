@@ -271,16 +271,74 @@ class DataIngestionService:
 
         return chunks
 
+    def _poll_rag_operation(self, operation_name: str, access_token: str, max_wait_seconds: int = 600) -> bool:
+        """Poll RAG import operation until completion
+
+        Args:
+            operation_name: Full operation name from RAG import response
+            access_token: OAuth2 access token for API calls
+            max_wait_seconds: Maximum time to wait (default 10 minutes)
+
+        Returns:
+            True if operation succeeded, False otherwise
+        """
+        import time
+
+        poll_interval = 10  # Check every 10 seconds
+        max_polls = max_wait_seconds // poll_interval
+
+        logger.info(f"⏳ Polling RAG operation (max {max_wait_seconds}s): {operation_name}")
+
+        for attempt in range(max_polls):
+            try:
+                # Get operation status
+                url = f"https://aiplatform.googleapis.com/v1beta1/{operation_name}"
+                headers = {
+                    'Authorization': f'Bearer {access_token}',
+                    'Content-Type': 'application/json'
+                }
+
+                response = requests.get(url, headers=headers, timeout=30)
+
+                if response.status_code == 200:
+                    operation = response.json()
+
+                    # Check if done
+                    if operation.get('done', False):
+                        # Check for errors
+                        if 'error' in operation:
+                            error = operation['error']
+                            logger.error(f"❌ RAG operation failed: {error.get('message', 'Unknown error')}")
+                            return False
+                        else:
+                            logger.info(f"✅ RAG vectorization completed successfully after {(attempt + 1) * poll_interval}s")
+                            return True
+                    else:
+                        # Still in progress
+                        logger.info(f"   ⏳ RAG vectorization in progress... ({(attempt + 1) * poll_interval}s elapsed)")
+                        time.sleep(poll_interval)
+                else:
+                    logger.warning(f"⚠️ Failed to poll operation status: {response.status_code}")
+                    return False
+
+            except Exception as e:
+                logger.warning(f"⚠️ Error polling RAG operation: {e}")
+                return False
+
+        # Timeout reached
+        logger.warning(f"⚠️ RAG operation timeout after {max_wait_seconds}s - vectors may not be ready yet")
+        return False
+
     def _store_in_rag_engine(self, chunks: List[Dict[str, Any]], metadata: Dict[str, Any]) -> List[str]:
-        """Store document chunks in Vertex AI RAG Engine via Import API"""
+        """Store document chunks in Vertex AI RAG Engine via Import API with completion polling"""
 
         vector_ids = []
-        
+
         try:
             import requests as req_lib
             from google.cloud import storage
             import tempfile
-            
+
             # Get access token using gcloud command (most reliable method)
             import subprocess
             try:
@@ -297,68 +355,68 @@ class DataIngestionService:
                 logger.info(f"✅ RAG: Access token from gcloud (length: {len(access_token)})")
             except Exception as gcloud_error:
                 logger.warning(f"⚠️ gcloud command failed: {gcloud_error}, trying service account directly")
-                
+
                 # Fallback: Use service account with requests library directly
                 google_cloud_key_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
                 if not google_cloud_key_path or not os.path.exists(google_cloud_key_path):
                     raise ValueError(f"❌ Service account key not found at: {google_cloud_key_path}")
-                
+
                 # Load service account and manually get OAuth2 token
                 import json
                 with open(google_cloud_key_path, 'r') as f:
                     sa_info = json.load(f)
-                
+
                 # Use google.auth with explicit token request
                 from google.oauth2 import service_account
                 from google.auth.transport.requests import Request
-                
+
                 credentials = service_account.Credentials.from_service_account_info(
                     sa_info,
                     scopes=['https://www.googleapis.com/auth/cloud-platform']
                 )
                 credentials.refresh(Request())
                 access_token = credentials.token
-                
+
                 if not access_token:
                     raise ValueError("❌ Failed to get access token from service account")
-                
+
                 logger.info(f"✅ RAG: Access token from service account (length: {len(access_token)})")
-            
+
             # Get RAG corpus configuration
             vertex_project = os.getenv('VERTEX_PROJECT', PROJECT_ID)
             vertex_location = os.getenv('VERTEX_LOCATION')
             rag_corpus_id = os.getenv('RAG_CORPUS_ID')
             gcs_bucket = os.getenv('GCS_BUCKET')
-            
+
             if not all([vertex_project, vertex_location, rag_corpus_id, gcs_bucket]):
                 raise ValueError("❌ VERTEX_PROJECT, VERTEX_LOCATION, RAG_CORPUS_ID, and GCS_BUCKET must all be configured")
-            
+
             # Create temporary file with chunks content
             temp_file_path = None
             try:
                 # Combine chunks into single document
                 combined_content = "\n\n".join([chunk['content'] for chunk in chunks])
-                
+
                 # Create temp file
                 with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as tf:
                     tf.write(combined_content)
                     temp_file_path = tf.name
-                
+
                 # Upload to GCS first (required by RAG Engine Import API) - reuse existing client
                 bucket = self.storage_client.bucket(gcs_bucket)
-                
+
                 # Create blob name from metadata
                 file_name = metadata.get('file_name', 'unknown')
                 blob_name = f"rag-uploads/{file_name}.txt"
                 blob = bucket.blob(blob_name)
                 blob.upload_from_filename(temp_file_path)
-                
+
                 gcs_uri = f"gs://{gcs_bucket}/{blob_name}"
                 logger.info(f"📤 Uploaded to GCS: {gcs_uri}")
-                
+
                 # Import to RAG Engine using Import API
                 url = f"https://{vertex_location}-aiplatform.googleapis.com/v1beta1/projects/{vertex_project}/locations/{vertex_location}/ragCorpora/{rag_corpus_id}/ragFiles:import"
-                
+
                 payload = {
                     "import_rag_files_config": {
                         "gcs_source": {
@@ -371,25 +429,31 @@ class DataIngestionService:
                         "max_embedding_requests_per_min": int(os.getenv('MAX_EMBEDDING_QPM', 1000))
                     }
                 }
-                
+
                 # Use Bearer token with ACCESS token from ADC
                 headers = {
                     'Authorization': f'Bearer {access_token}',
                     'Content-Type': 'application/json'
                 }
-                
+
                 logger.info(f"🔑 RAG: Making authenticated request to Vertex AI RAG Engine")
-                
-                # ASYNC RAG Import - don't wait for completion (return immediately)
-                # This prevents 30-minute timeouts while RAG processes in background
+
+                # SYNCHRONOUS RAG Import with operation polling
+                # CRITICAL: Wait for vectorization to complete before continuing workflow
                 try:
                     response = requests.post(url, json=payload, headers=headers, timeout=60)
-                    
+
                     if response.status_code == 200:
                         operation = response.json()
                         operation_name = operation.get('name', 'unknown')
-                        logger.info(f"✅ RAG import queued (async): {operation_name}")
-                        logger.info(f"   RAG will process in background - ingestion continues immediately")
+                        logger.info(f"✅ RAG import started: {operation_name}")
+
+                        # CRITICAL: Poll for completion (max 10 minutes)
+                        success = self._poll_rag_operation(operation_name, access_token, max_wait_seconds=600)
+
+                        if not success:
+                            logger.warning(f"⚠️ RAG vectorization did not complete - vectors may not be available for analysis")
+
                     elif response.status_code == 400:
                         error_data = response.json()
                         error_msg = error_data.get('error', {}).get('message', '')
@@ -401,18 +465,18 @@ class DataIngestionService:
                         logger.warning(f"⚠️ RAG returned {response.status_code} - continuing without RAG")
                 except Exception as e:
                     logger.warning(f"⚠️ RAG import failed: {str(e)[:200]} - continuing without RAG")
-                
+
                 # Track chunk IDs
                 for chunk in chunks:
                     vector_ids.append(chunk['id'])
-                
+
                 return vector_ids
-                
+
             finally:
                 # Cleanup temp file
                 if temp_file_path and os.path.exists(temp_file_path):
                     os.unlink(temp_file_path)
-            
+
         except Exception as e:
             logger.error(f"❌ Error storing in Vertex AI RAG Engine: {e}")
             raise ValueError(f"Failed to store in RAG Engine: {e}")

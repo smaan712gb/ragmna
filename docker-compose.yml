@@ -83,9 +83,14 @@ services:
       - "8003:8080"
     environment:
       - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - VERTEX_PROJECT=${VERTEX_PROJECT}
+      - VERTEX_LOCATION=${VERTEX_LOCATION}
+      - GOOGLE_CLOUD_KEY_PATH=/app/secrets/gcp-service-key.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-service-key.json
       - PORT=8080
     volumes:
       - ./services/financial-normalizer:/app
+      - ./secrets:/app/secrets:ro
 
   three-statement-modeler:
     build:
@@ -119,6 +124,7 @@ services:
       - "8006:8080"
     environment:
       - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - FMP_API_KEY=${FMP_API_KEY}
       - PORT=8080
     volumes:
       - ./services/cca-valuation:/app

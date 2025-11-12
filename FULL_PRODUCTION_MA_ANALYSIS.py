@@ -63,6 +63,8 @@ class FullProductionMAAnalysis:
         self.results = {
             'deal': f'{self.acquirer} → {self.target}',
             'timestamp': datetime.now().isoformat(),
+            'run_id': None,
+            'cache_name': None,
             'pipeline_steps': [],
             'data': {}
         }
@@ -73,7 +75,7 @@ class FullProductionMAAnalysis:
         """Get Cloud Run service URLs"""
         
         # Base pattern for Cloud Run URLs
-        base_url = f"https://{{service}}-680928579719.{self.region}.run.app"
+        base_url = f"https://{{service}}-{self.project_id}.{self.region}.run.app"
         
         services = {
             'data-ingestion': base_url.format(service='data-ingestion'),
@@ -96,13 +98,63 @@ class FullProductionMAAnalysis:
         logger.info(f"📡 Configured {len(services)} Cloud Run services")
         return services
     
+    def _initialize_run(self) -> Optional[Dict[str, Any]]:
+        """Initialize run with run-manager for context caching"""
+        
+        logger.info(f"\n🚀 Initializing run for {self.acquirer} -> {self.target}...")
+        
+        url = f"{self.service_urls['run-manager']}/runs/initialize"
+        payload = {
+            'acquirer': self.acquirer,
+            'target': self.target,
+            'as_of_date': datetime.now().isoformat()
+        }
+        
+        try:
+            response = requests.post(
+                url,
+                json=payload,
+                headers=self.headers,
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                run_data = response.json()
+                self.results['run_id'] = run_data.get('run_id')
+                self.results['cache_name'] = run_data.get('cache_name')
+                logger.info(f"   ✅ Run initialized successfully")
+                logger.info(f"      - Run ID: {self.results['run_id']}")
+                logger.info(f"      - Cache Name: {self.results['cache_name']}")
+                
+                self._add_pipeline_step("Run Initialization", "SUCCESS", response.status_code)
+                return run_data
+            else:
+                logger.error(f"   ❌ Run initialization failed: {response.status_code}")
+                logger.error(f"      {response.text}")
+                self._add_pipeline_step("Run Initialization", "FAILED", response.status_code)
+                return None
+                
+        except Exception as e:
+            logger.error(f"   ❌ Error: {e}")
+            self._add_pipeline_step("Run Initialization", "ERROR", str(e))
+            return None
+
     def run_complete_analysis(self) -> bool:
         """Execute complete M&A analysis pipeline"""
         
         self._print_header()
         
         try:
+            # STEP 0: INITIALIZE RUN
+            logger.info("\n" + "="*80)
+            logger.info("STEP 0: INITIALIZING RUN & CONTEXT CACHE")
+            logger.info("="*80)
+            
+            if not self._initialize_run():
+                raise Exception("Run initialization failed")
+            
             # STEP 1: Data Ingestion (ALL SOURCES)
+            # TODO: Parallelize data ingestion for acquirer and target to improve performance.
             logger.info("\n" + "="*80)
             logger.info("STEP 1: DATA INGESTION FROM ALL SOURCES")
             logger.info("="*80)
@@ -323,8 +375,9 @@ class FullProductionMAAnalysis:
         
         logger.info(f"\n🏷️  Classifying {symbol} using Gemini AI...")
         
-        # Use fallback classification directly - it's production-ready and uses real metrics
-        # This avoids re-fetching data and potential service failures
+        # TODO: Replace with a direct call to the llm-orchestrator for production-grade classification.
+        # The current implementation uses a basic fallback logic.
+        logger.warning("Using fallback classification. For production, enable the llm-orchestrator classification.")
         return self._basic_classification(symbol, company_data)
     
     def _basic_classification(self, symbol: str, company_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -382,7 +435,8 @@ class FullProductionMAAnalysis:
         url = f"{self.service_urls['financial-normalizer']}/normalize"
         payload = {
             'symbol': symbol,
-            'financial_data': company_data
+            'financial_data': company_data,
+            'run_cache_name': self.results['cache_name']
         }
         
         try:
@@ -659,7 +713,10 @@ class FullProductionMAAnalysis:
         logger.info(f"\n📋 Analyzing precedent transactions...")
         
         url = f"{self.service_urls['precedent-transactions']}/analyze"
-        payload = {'classification': classification}
+        payload = {
+            'classification': classification,
+            'run_cache_name': self.results['cache_name']
+        }
         
         try:
             response = requests.post(
@@ -691,8 +748,10 @@ class FullProductionMAAnalysis:
         
         logger.info(f"\n📄 Generating board report...")
         
-        url = f"{self.service_urls['board-reporting']}/generate"
-        payload = {'analysis_data': analysis_data}
+        payload = {
+            'analysis_data': analysis_data,
+            'run_cache_name': self.results['cache_name']
+        }
         
         try:
             response = requests.post(
@@ -763,7 +822,10 @@ class FullProductionMAAnalysis:
         logger.info(f"\n✅ Running QA validation...")
         
         url = f"{self.service_urls['qa-engine']}/validate"
-        payload = {'analysis_data': analysis_data}
+        payload = {
+            'analysis_data': analysis_data,
+            'run_cache_name': self.results['cache_name']
+        }
         
         try:
             response = requests.post(

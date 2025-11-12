@@ -27,9 +27,11 @@ class DCFValuationEngine:
     """Advanced DCF valuation engine with scenario analysis"""
 
     def __init__(self):
+        # TODO: Externalize these financial metrics. Fetch from a reliable source or make them configurable.
         self.risk_free_rate = 0.04  # 4% risk-free rate (10-year Treasury)
         self.market_risk_premium = 0.06  # 6% market risk premium
 
+        # TODO: Expand and maintain this list of industry betas. Consider using a more dynamic approach.
         # Industry beta adjustments
         self.industry_betas = {
             'technology': 1.2,
@@ -44,6 +46,7 @@ class DCFValuationEngine:
             'communication': 1.0
         }
 
+        # TODO: These terminal growth rates are based on classification. Consider a more nuanced approach.
         # Terminal growth rates by classification
         self.terminal_growth_rates = {
             'hyper_growth': 0.045,  # 4.5% - Strong sustained growth for tech leaders
@@ -141,6 +144,8 @@ class DCFValuationEngine:
         cost_of_equity = self.risk_free_rate + beta * self.market_risk_premium
 
         # Cost of debt (simplified)
+        # TODO: Implement a more robust calculation for the cost of debt.
+        # This could be based on the company's credit rating or interest expense.
         cost_of_debt = 0.05  # 5% average corporate bond rate
 
         # Capital structure
@@ -156,6 +161,7 @@ class DCFValuationEngine:
         weight_debt = total_debt / total_capital
 
         # Tax rate
+        # TODO: Use the effective tax rate from the company's financial statements.
         tax_rate = 0.25  # Simplified
 
         # WACC calculation
@@ -182,6 +188,8 @@ class DCFValuationEngine:
     def _estimate_total_debt(self, company_data: Dict[str, Any]) -> float:
         """Estimate total debt from available data"""
 
+        # TODO: This is a simplified estimation of total debt. A more comprehensive approach would be to
+        # consider other debt-like items such as capital leases and unfunded pension liabilities.
         financials = company_data.get('financials', {})
         balance_stmts = financials.get('balance_sheets', [])
 
@@ -211,6 +219,8 @@ class DCFValuationEngine:
         gordon_tv = final_fcf * (1 + terminal_growth) / (wacc - terminal_growth)
 
         # Method 2: Exit Multiple (simplified - 8x final year FCF)
+        # TODO: The exit multiple is simplified. It should be based on comparable company analysis (CCA)
+        # or precedent transactions for a more accurate valuation.
         exit_multiple = self._get_exit_multiple(classification)
         multiple_tv = final_fcf * exit_multiple
 
@@ -317,6 +327,9 @@ class DCFValuationEngine:
                                  classification: Dict[str, Any]) -> Dict[str, Any]:
         """Perform scenario analysis (Base, Upside, Downside)"""
 
+        # TODO: The scenario analysis is based on simple multipliers. A more robust implementation
+        # would involve adjusting the underlying drivers of the financial model (e.g., revenue growth, margins)
+        # to create more realistic scenarios.
         primary_class = classification.get('primary_classification', 'stable')
 
         # Scenario adjustments
@@ -456,6 +469,7 @@ dcf_engine = DCFValuationEngine()
 
 def require_api_key(f):
     """Decorator to require API key"""
+    # TODO: Integrate with the auth-service for a more robust authentication mechanism (e.g., OAuth2, JWT).
     @wraps(f)
     def decorated_function(*args, **kwargs):
         api_key = request.headers.get('X-API-Key')
@@ -477,11 +491,18 @@ def health_check():
 @require_api_key
 def perform_dcf_valuation():
     """Perform DCF valuation analysis"""
+    # TODO: Implement more specific error handling.
     try:
         data = request.get_json()
         company_data = data.get('company_data', {})
         financial_model = data.get('financial_model', {})
         classification = data.get('classification', {})
+        run_cache_name = data.get('run_cache_name')  # Optional
+
+        # TODO: Implement a caching layer using the run_cache_name.
+        # This could be a simple in-memory cache or a more robust solution like Redis.
+        if run_cache_name:
+            logger.info(f"Received run_cache_name: {run_cache_name}")
 
         if not company_data or not financial_model:
             return jsonify({'error': 'Company data and financial model are required'}), 400

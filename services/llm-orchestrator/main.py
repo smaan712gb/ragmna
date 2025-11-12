@@ -47,6 +47,7 @@ CORS(app, resources={
 # Service URLs (to be configured via environment variables)
 FMP_PROXY_URL = os.getenv('FMP_PROXY_URL', 'http://fmp-api-proxy:8080')
 RAG_ENGINE_URL = os.getenv('RAG_ENGINE_URL', 'https://LOCATION-aiplatform.googleapis.com/v1beta1')
+FINANCIAL_NORMALIZER_URL = os.getenv('FINANCIAL_NORMALIZER_URL', 'http://financial-normalizer:8080')
 THREE_STATEMENT_MODELER_URL = os.getenv('THREE_STATEMENT_MODELER_URL', 'http://three-statement-modeler:8080')
 CCA_VALUATION_URL = os.getenv('CCA_VALUATION_URL', 'http://cca-valuation:8080')
 DCF_VALUATION_URL = os.getenv('DCF_VALUATION_URL', 'http://dcf-valuation:8080')
@@ -486,6 +487,22 @@ class MAOrchestrator:
                 'timestamp': datetime.now().isoformat()
             })
 
+            # Step 2.5: Financial Data Normalization (CRITICAL - NEW STEP)
+            logger.info("Step 2.5: Normalizing financial data for target")
+            try:
+                normalized_target_data = await self._normalize_financial_data(target_symbol, target_data)
+                logger.info(f"✅ Target financial data normalized successfully")
+            except Exception as norm_error:
+                logger.error(f"❌ Financial normalization failed: {norm_error}")
+                raise ValueError(f"Critical failure: Financial normalization failed for {target_symbol}. Cannot proceed with analysis.")
+            
+            analysis_result['normalized_data'] = normalized_target_data
+            analysis_result['workflow_steps'].append({
+                'step': 'financial_normalization',
+                'completed': True,
+                'timestamp': datetime.now().isoformat()
+            })
+
             # Step 3: Peer Identification
             logger.info("Step 3: Identifying peer companies")
             peers = await self._identify_peers(target_symbol, target_profile)
@@ -496,9 +513,19 @@ class MAOrchestrator:
                 'timestamp': datetime.now().isoformat()
             })
 
-            # Step 4: 3-Statement Modeling
-            logger.info("Step 4: Building 3-statement financial models")
-            financial_models = await self._build_financial_models(target_symbol, target_profile)
+            # Step 4: 3-Statement Modeling (with original company data)
+            logger.info("Step 4: Building 3-statement financial models with normalized data")
+            financial_models = await self._build_financial_models(
+                target_symbol, 
+                target_profile,
+                target_data  # Pass original company_data, not normalized_data
+            )
+            
+            # Validate financial models exist
+            if not financial_models or not any(key in financial_models for key in ['income_statement', 'balance_sheet', 'cash_flow']):
+                logger.error(f"❌ Financial modeling produced empty or invalid models for {target_symbol}")
+                raise ValueError(f"Financial modeling failed to generate valid models for {target_symbol}")
+            
             analysis_result['financial_models'] = financial_models
             analysis_result['workflow_steps'].append({
                 'step': 'financial_modeling',
@@ -509,7 +536,8 @@ class MAOrchestrator:
             # Step 5: Valuation Analysis
             logger.info("Step 5: Performing valuation analysis")
             valuation_results = await self._perform_valuation_analysis(
-                target_symbol, acquirer_symbol, financial_models, peers
+                target_symbol, acquirer_symbol, financial_models, peers,
+                target_data, target_profile
             )
             analysis_result['valuation_analysis'] = valuation_results
             analysis_result['workflow_steps'].append({
@@ -570,13 +598,40 @@ class MAOrchestrator:
             logger.error(f"Error ingesting data for {symbol}: {e}")
             return {'status': 'error', 'symbol': symbol, 'error': str(e)}
 
-    async def _identify_peers(self, symbol: str, company_profile: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Identify peer companies for comparison"""
+    async def _normalize_financial_data(self, symbol: str, company_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize financial data before modeling"""
         try:
-            # Use FMP API to get peer companies
             headers = {'X-API-Key': SERVICE_API_KEY}
-            payload = {'symbol': symbol}
+            payload = {
+                'symbol': symbol,
+                'company_data': company_data
+            }
 
+            response = requests.post(
+                f"{FINANCIAL_NORMALIZER_URL}/normalize",
+                json=payload,
+                headers=headers,
+                timeout=120
+            )
+
+            if response.status_code == 200:
+                normalized_data = response.json()
+                logger.info(f"✅ Financial data normalized for {symbol}")
+                return normalized_data
+            else:
+                error_msg = f"Financial normalization failed for {symbol}: {response.status_code}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
+
+        except Exception as e:
+            logger.error(f"Error normalizing financial data for {symbol}: {e}")
+            raise ValueError(f"Financial normalization failed: {e}")
+
+    async def _identify_peers(self, symbol: str, company_profile: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Identify peer companies with fallback strategies"""
+        try:
+            # Strategy 1: Try FMP peers API
+            headers = {'X-API-Key': SERVICE_API_KEY}
             response = requests.get(
                 f"{FMP_PROXY_URL}/peers",
                 params={'symbol': symbol},
@@ -586,115 +641,181 @@ class MAOrchestrator:
 
             if response.status_code == 200:
                 peers_data = response.json()
-                return peers_data.get('peers', [])
-            else:
-                logger.warning(f"Could not fetch peers for {symbol}")
-                return []
+                peers = peers_data.get('peers', [])
+                if peers:
+                    logger.info(f"✅ Found {len(peers)} peers for {symbol} via FMP API")
+                    return peers
+
+            # Strategy 2: Fallback - Use industry/sector to find peers
+            logger.warning(f"FMP peers API returned no results, using industry-based fallback for {symbol}")
+            
+            industry = company_profile.get('profile_data', {}).get('industry', '')
+            sector = company_profile.get('profile_data', {}).get('sector', '')
+            
+            if industry or sector:
+                # Get companies in same industry/sector from FMP
+                screener_params = {'limit': 10}
+                if industry:
+                    screener_params['industry'] = industry
+                if sector:
+                    screener_params['sector'] = sector
+                    
+                response = requests.get(
+                    f"{FMP_PROXY_URL}/stock-screener",
+                    params=screener_params,
+                    headers=headers,
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    screener_results = response.json()
+                    peers = [p for p in screener_results if p.get('symbol') != symbol][:5]
+                    if peers:
+                        logger.info(f"✅ Found {len(peers)} peers via industry screener for {symbol}")
+                        return peers
+            
+            # If all strategies fail
+            logger.warning(f"⚠️ No peers found for {symbol} - CCA valuation will be skipped")
+            return []
 
         except Exception as e:
             logger.error(f"Error identifying peers for {symbol}: {e}")
             return []
 
-    async def _build_financial_models(self, symbol: str, company_profile: Dict[str, Any]) -> Dict[str, Any]:
-        """Build 3-statement financial models based on company profile"""
+    async def _build_financial_models(self, symbol: str, company_profile: Dict[str, Any], 
+                                     normalized_data: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Build 3-statement financial models with normalized data"""
         try:
             headers = {'X-API-Key': SERVICE_API_KEY}
+            # three-statement-modeler expects: company_data, classification, projection_years
             payload = {
-                'symbol': symbol,
-                'company_profile': company_profile,
-                'model_type': 'three_statement'
+                'company_data': normalized_data if normalized_data else {},
+                'classification': company_profile,  # company_profile IS the classification
+                'projection_years': 5
             }
 
             response = requests.post(
-                f"{THREE_STATEMENT_MODELER_URL}/model",
+                f"{THREE_STATEMENT_MODELER_URL}/model/generate",
                 json=payload,
                 headers=headers,
                 timeout=120
             )
 
             if response.status_code == 200:
-                return response.json()
+                models = response.json()
+                logger.info(f"✅ Financial models built successfully for {symbol}")
+                return models
             else:
-                logger.error(f"Financial modeling failed for {symbol}")
-                return {}
+                error_msg = f"Financial modeling failed for {symbol}: {response.status_code}"
+                logger.error(error_msg)
+                raise ValueError(error_msg)
 
         except Exception as e:
             logger.error(f"Error building financial models for {symbol}: {e}")
-            return {}
+            raise ValueError(f"Financial modeling failed: {e}")
 
     async def _perform_valuation_analysis(self, target_symbol: str, acquirer_symbol: str,
-                                        financial_models: Dict[str, Any], peers: List[Dict[str, Any]]) -> Dict[str, Any]:
+                                        financial_models: Dict[str, Any], peers: List[Dict[str, Any]],
+                                        target_data: Dict[str, Any] = None,
+                                        target_profile: Dict[str, Any] = None) -> Dict[str, Any]:
         """Perform comprehensive valuation analysis with parallel execution"""
         
         logger.info("Executing valuations in parallel for maximum performance")
+        
+        # Prepare company_data for valuation services
+        company_data = target_data if target_data else {}
+        classification = target_profile if target_profile else {}
         
         # Create async tasks for parallel execution
         async def call_dcf():
             try:
                 headers = {'X-API-Key': SERVICE_API_KEY}
+                # DCF service expects: company_data, financial_model, classification
                 dcf_payload = {
-                    'target_symbol': target_symbol,
-                    'financial_models': financial_models
+                    'company_data': company_data,
+                    'financial_model': financial_models,
+                    'classification': classification
                 }
+                logger.info(f"Calling DCF valuation at {DCF_VALUATION_URL}/valuation/dcf")
                 loop = asyncio.get_event_loop()
                 response = await loop.run_in_executor(
                     None,
                     lambda: requests.post(
-                        f"{DCF_VALUATION_URL}/valuate",
+                        f"{DCF_VALUATION_URL}/valuation/dcf",
                         json=dcf_payload,
                         headers=headers,
                         timeout=60
                     )
                 )
-                return response.json() if response.status_code == 200 else {}
+                if response.status_code == 200:
+                    logger.info("✅ DCF valuation completed successfully")
+                    return response.json()
+                else:
+                    logger.error(f"❌ DCF valuation failed: {response.status_code} - {response.text}")
+                    return {}
             except Exception as e:
-                logger.error(f"Error in DCF valuation: {e}")
+                logger.error(f"❌ Error in DCF valuation: {e}")
                 return {}
 
         async def call_cca():
             try:
                 headers = {'X-API-Key': SERVICE_API_KEY}
+                # CCA service expects: company_data, peers, classification
                 cca_payload = {
-                    'target_symbol': target_symbol,
+                    'company_data': company_data,
                     'peers': peers,
-                    'financial_models': financial_models
+                    'classification': classification
                 }
+                logger.info(f"Calling CCA valuation at {CCA_VALUATION_URL}/valuation/cca with {len(peers)} peers")
                 loop = asyncio.get_event_loop()
                 response = await loop.run_in_executor(
                     None,
                     lambda: requests.post(
-                        f"{CCA_VALUATION_URL}/valuate",
+                        f"{CCA_VALUATION_URL}/valuation/cca",
                         json=cca_payload,
                         headers=headers,
                         timeout=60
                     )
                 )
-                return response.json() if response.status_code == 200 else {}
+                if response.status_code == 200:
+                    logger.info("✅ CCA valuation completed successfully")
+                    return response.json()
+                else:
+                    logger.error(f"❌ CCA valuation failed: {response.status_code} - {response.text}")
+                    return {}
             except Exception as e:
-                logger.error(f"Error in CCA valuation: {e}")
+                logger.error(f"❌ Error in CCA valuation: {e}")
                 return {}
 
         async def call_lbo():
             try:
                 headers = {'X-API-Key': SERVICE_API_KEY}
+                # LBO service expects: company_data, financial_model, classification, purchase_price (optional)
                 lbo_payload = {
-                    'target_symbol': target_symbol,
-                    'acquirer_symbol': acquirer_symbol,
-                    'financial_models': financial_models
+                    'company_data': company_data,
+                    'financial_model': financial_models,
+                    'classification': classification,
+                    'purchase_price': None  # Let LBO service estimate
                 }
+                logger.info(f"Calling LBO analysis at {LBO_ANALYSIS_URL}/analysis/lbo")
                 loop = asyncio.get_event_loop()
                 response = await loop.run_in_executor(
                     None,
                     lambda: requests.post(
-                        f"{LBO_ANALYSIS_URL}/analyze",
+                        f"{LBO_ANALYSIS_URL}/analysis/lbo",
                         json=lbo_payload,
                         headers=headers,
                         timeout=60
                     )
                 )
-                return response.json() if response.status_code == 200 else {}
+                if response.status_code == 200:
+                    logger.info("✅ LBO analysis completed successfully")
+                    return response.json()
+                else:
+                    logger.error(f"❌ LBO analysis failed: {response.status_code} - {response.text}")
+                    return {}
             except Exception as e:
-                logger.error(f"Error in LBO analysis: {e}")
+                logger.error(f"❌ Error in LBO analysis: {e}")
                 return {}
 
         # Execute all valuations in parallel
@@ -725,21 +846,23 @@ class MAOrchestrator:
                 'company_data': company_data
             }
 
+            logger.info(f"Calling DD Agent at {DD_AGENT_URL}/due-diligence/analyze")
             response = requests.post(
-                f"{DD_AGENT_URL}/analyze",
+                f"{DD_AGENT_URL}/due-diligence/analyze",
                 json=payload,
                 headers=headers,
                 timeout=120
             )
 
             if response.status_code == 200:
+                logger.info("✅ Due diligence completed successfully")
                 return response.json()
             else:
-                logger.error(f"Due diligence failed for {symbol}")
+                logger.error(f"❌ Due diligence failed for {symbol}: {response.status_code} - {response.text}")
                 return {}
 
         except Exception as e:
-            logger.error(f"Error in due diligence for {symbol}: {e}")
+            logger.error(f"❌ Error in due diligence for {symbol}: {e}")
             return {}
 
     async def _generate_final_report(self, analysis_result: Dict[str, Any]) -> Dict[str, Any]:
@@ -747,21 +870,23 @@ class MAOrchestrator:
         try:
             headers = {'X-API-Key': SERVICE_API_KEY}
 
+            logger.info(f"Calling Reporting Dashboard at {REPORTING_DASHBOARD_URL}/report/summary")
             response = requests.post(
-                f"{REPORTING_DASHBOARD_URL}/generate",
+                f"{REPORTING_DASHBOARD_URL}/report/summary",
                 json=analysis_result,
                 headers=headers,
                 timeout=120
             )
 
             if response.status_code == 200:
+                logger.info("✅ Final report generated successfully")
                 return response.json()
             else:
-                logger.error("Final report generation failed")
+                logger.error(f"❌ Final report generation failed: {response.status_code} - {response.text}")
                 return {'error': 'Report generation failed'}
 
         except Exception as e:
-            logger.error(f"Error generating final report: {e}")
+            logger.error(f"❌ Error generating final report: {e}")
             return {'error': str(e)}
 
 # Global orchestrator instance
