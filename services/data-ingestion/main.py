@@ -521,6 +521,9 @@ class DataIngestionService:
             company_info = self._get_company_info(symbol)
             results['company_info'] = company_info
 
+            # Store for vectorization (instance variable)
+            self.last_company_info = company_info
+
             # Fetch data from each source
             for source in data_sources:
                 if source == 'sec_filings':
@@ -1264,7 +1267,10 @@ class DataIngestionService:
             # Get CIK from SEC filings for unified corpus
             cik = fetched_data.get('sec_filings', {}).get('cik', symbol)
             logger.info(f"Using CIK for vectorization: {cik}")
-            
+
+            # Get company_info from results (passed from fetch_company_data)
+            company_info = self.last_company_info  # Will be set in fetch_company_data
+
             # Process SEC filings
             if 'sec_filings' in fetched_data:
                 sec_results = self._process_sec_filings_for_vectorization(symbol, fetched_data['sec_filings'])
@@ -1289,11 +1295,192 @@ class DataIngestionService:
                 vectorization_results['chunks_created'] += news_results.get('chunks_created', 0)
                 vectorization_results['vectors_stored'] += news_results.get('vectors_stored', 0)
 
+            # NEW: Process FMP financial data (income, balance, cash flow, ratios)
+            if company_info:
+                fmp_results = self._process_fmp_financials_for_vectorization(symbol, company_info, cik)
+                vectorization_results['processing_details']['fmp_financials'] = fmp_results
+                vectorization_results['total_documents'] += 1  # Treat as single document
+                vectorization_results['chunks_created'] += fmp_results.get('chunks_created', 0)
+                vectorization_results['vectors_stored'] += fmp_results.get('vectors_stored', 0)
+
+            # NEW: Process yfinance data (market data, institutional holders, etc.)
+            if company_info and company_info.get('yfinance_data'):
+                yf_results = self._process_yfinance_data_for_vectorization(symbol, company_info['yfinance_data'], cik)
+                vectorization_results['processing_details']['yfinance'] = yf_results
+                vectorization_results['total_documents'] += 1  # Treat as single document
+                vectorization_results['chunks_created'] += yf_results.get('chunks_created', 0)
+                vectorization_results['vectors_stored'] += yf_results.get('vectors_stored', 0)
+
         except Exception as e:
             logger.error(f"Error in data processing and vectorization: {e}")
             vectorization_results['error'] = str(e)
 
         return vectorization_results
+
+    def _process_fmp_financials_for_vectorization(self, symbol: str, company_info: Dict[str, Any], cik: str = None) -> Dict[str, Any]:
+        """Process FMP financial statements and ratios for vectorization"""
+
+        logger.info(f"📊 Processing FMP financial data for vectorization: {symbol}")
+
+        content_parts = []
+
+        # Process income statements (last 5 periods)
+        if 'income_statements' in company_info and company_info['income_statements']:
+            content_parts.append("=== INCOME STATEMENTS (Historical) ===\n")
+            for stmt in company_info['income_statements'][:5]:
+                content_parts.append(
+                    f"\nPeriod: {stmt.get('date', 'Unknown')}\n"
+                    f"Revenue: ${stmt.get('revenue', 0)/1e9:.2f}B\n"
+                    f"Cost of Revenue: ${stmt.get('costOfRevenue', 0)/1e9:.2f}B\n"
+                    f"Gross Profit: ${stmt.get('grossProfit', 0)/1e9:.2f}B\n"
+                    f"Gross Profit Margin: {stmt.get('grossProfitRatio', 0)*100:.1f}%\n"
+                    f"Operating Expenses: ${stmt.get('operatingExpenses', 0)/1e9:.2f}B\n"
+                    f"Operating Income: ${stmt.get('operatingIncome', 0)/1e9:.2f}B\n"
+                    f"Operating Margin: {stmt.get('operatingIncomeRatio', 0)*100:.1f}%\n"
+                    f"EBITDA: ${stmt.get('ebitda', 0)/1e9:.2f}B\n"
+                    f"EBITDA Margin: {stmt.get('ebitdaratio', 0)*100:.1f}%\n"
+                    f"Net Income: ${stmt.get('netIncome', 0)/1e9:.2f}B\n"
+                    f"Net Profit Margin: {stmt.get('netIncomeRatio', 0)*100:.1f}%\n"
+                    f"EPS: ${stmt.get('eps', 0):.2f}\n"
+                    f"EPS Diluted: ${stmt.get('epsdiluted', 0):.2f}\n"
+                )
+
+        # Process balance sheets (last 5 periods)
+        if 'balance_sheets' in company_info and company_info['balance_sheets']:
+            content_parts.append("\n=== BALANCE SHEETS (Historical) ===\n")
+            for bs in company_info['balance_sheets'][:5]:
+                content_parts.append(
+                    f"\nPeriod: {bs.get('date', 'Unknown')}\n"
+                    f"Total Assets: ${bs.get('totalAssets', 0)/1e9:.2f}B\n"
+                    f"Current Assets: ${bs.get('totalCurrentAssets', 0)/1e9:.2f}B\n"
+                    f"Cash and Equivalents: ${bs.get('cashAndCashEquivalents', 0)/1e9:.2f}B\n"
+                    f"Accounts Receivable: ${bs.get('netReceivables', 0)/1e9:.2f}B\n"
+                    f"Inventory: ${bs.get('inventory', 0)/1e9:.2f}B\n"
+                    f"Total Liabilities: ${bs.get('totalLiabilities', 0)/1e9:.2f}B\n"
+                    f"Current Liabilities: ${bs.get('totalCurrentLiabilities', 0)/1e9:.2f}B\n"
+                    f"Total Debt: ${bs.get('totalDebt', 0)/1e9:.2f}B\n"
+                    f"Long-term Debt: ${bs.get('longTermDebt', 0)/1e9:.2f}B\n"
+                    f"Total Equity: ${bs.get('totalEquity', 0)/1e9:.2f}B\n"
+                    f"Retained Earnings: ${bs.get('retainedEarnings', 0)/1e9:.2f}B\n"
+                    f"Book Value per Share: ${bs.get('totalEquity', 0) / bs.get('commonStock', 1):.2f}\n"
+                )
+
+        # Process cash flow statements (last 5 periods)
+        if 'cash_flow_statements' in company_info and company_info['cash_flow_statements']:
+            content_parts.append("\n=== CASH FLOW STATEMENTS (Historical) ===\n")
+            for cf in company_info['cash_flow_statements'][:5]:
+                content_parts.append(
+                    f"\nPeriod: {cf.get('date', 'Unknown')}\n"
+                    f"Operating Cash Flow: ${cf.get('operatingCashFlow', 0)/1e9:.2f}B\n"
+                    f"Capital Expenditures: ${cf.get('capitalExpenditure', 0)/1e9:.2f}B\n"
+                    f"Free Cash Flow: ${cf.get('freeCashFlow', 0)/1e9:.2f}B\n"
+                    f"Investing Cash Flow: ${cf.get('netCashUsedForInvestingActivites', 0)/1e9:.2f}B\n"
+                    f"Financing Cash Flow: ${cf.get('netCashUsedProvidedByFinancingActivities', 0)/1e9:.2f}B\n"
+                    f"Dividends Paid: ${cf.get('dividendsPaid', 0)/1e9:.2f}B\n"
+                    f"Stock Repurchased: ${cf.get('commonStockRepurchased', 0)/1e9:.2f}B\n"
+                    f"Debt Repayment: ${cf.get('debtRepayment', 0)/1e9:.2f}B\n"
+                    f"Net Change in Cash: ${cf.get('netChangeInCash', 0)/1e9:.2f}B\n"
+                )
+
+        # Process financial ratios (last 5 periods)
+        if 'financial_ratios' in company_info and company_info['financial_ratios']:
+            content_parts.append("\n=== FINANCIAL RATIOS (Historical) ===\n")
+            for ratios in company_info['financial_ratios'][:5]:
+                content_parts.append(
+                    f"\nPeriod: {ratios.get('date', 'Unknown')}\n"
+                    f"Current Ratio: {ratios.get('currentRatio', 0):.2f}\n"
+                    f"Quick Ratio: {ratios.get('quickRatio', 0):.2f}\n"
+                    f"Debt to Equity: {ratios.get('debtEquityRatio', 0):.2f}\n"
+                    f"Debt to Assets: {ratios.get('debtRatio', 0):.2f}\n"
+                    f"Return on Assets (ROA): {ratios.get('returnOnAssets', 0)*100:.1f}%\n"
+                    f"Return on Equity (ROE): {ratios.get('returnOnEquity', 0)*100:.1f}%\n"
+                    f"Return on Capital (ROIC): {ratios.get('returnOnCapitalEmployed', 0)*100:.1f}%\n"
+                    f"Asset Turnover: {ratios.get('assetTurnover', 0):.2f}\n"
+                    f"Inventory Turnover: {ratios.get('inventoryTurnover', 0):.2f}\n"
+                    f"Receivables Turnover: {ratios.get('receivablesTurnover', 0):.2f}\n"
+                    f"Days Sales Outstanding: {ratios.get('daysOfSalesOutstanding', 0):.0f} days\n"
+                    f"Price to Earnings (P/E): {ratios.get('priceEarningsRatio', 0):.2f}\n"
+                    f"Price to Book (P/B): {ratios.get('priceToBookRatio', 0):.2f}\n"
+                    f"Price to Sales (P/S): {ratios.get('priceToSalesRatio', 0):.2f}\n"
+                    f"EV to Sales: {ratios.get('enterpriseValueMultiple', 0):.2f}\n"
+                )
+
+        if not content_parts:
+            logger.warning(f"⚠️ No FMP financial data available for vectorization: {symbol}")
+            return {'chunks_created': 0, 'vectors_stored': 0}
+
+        content = "\n".join(content_parts)
+
+        file_identifier = f"{symbol}_fmp_financials_{datetime.now().strftime('%Y%m%d')}"
+
+        metadata = {
+            'file_name': file_identifier,
+            'symbol': symbol,
+            'company_cik': cik or symbol,
+            'document_type': 'financial_statements',
+            'source': 'fmp_api',
+            'periods_included': len(company_info.get('income_statements', []))
+        }
+
+        chunks = self._chunk_document(content, metadata)
+        vector_ids = self._store_in_rag_engine(chunks, metadata)
+
+        logger.info(f"✅ Vectorized FMP financials: {len(chunks)} chunks, {len(vector_ids)} vectors")
+
+        return {
+            'chunks_created': len(chunks),
+            'vectors_stored': len(vector_ids)
+        }
+
+    def _process_yfinance_data_for_vectorization(self, symbol: str, yf_data: Dict[str, Any], cik: str = None) -> Dict[str, Any]:
+        """Process yfinance market data for vectorization"""
+
+        logger.info(f"📈 Processing yfinance data for vectorization: {symbol}")
+
+        content_parts = []
+
+        # Market data
+        if yf_data:
+            content_parts.append("=== MARKET DATA (yfinance) ===\n")
+            content_parts.append(
+                f"Market Cap: ${yf_data.get('market_cap', 0)/1e9:.2f}B\n"
+                f"Current Price: ${yf_data.get('current_price', 0):.2f}\n"
+                f"Beta: {yf_data.get('beta', 0):.2f}\n"
+                f"Forward P/E: {yf_data.get('forward_pe', 0):.2f}\n"
+                f"Trailing P/E: {yf_data.get('trailing_pe', 0):.2f}\n"
+                f"PEG Ratio: {yf_data.get('peg_ratio', 0):.2f}\n"
+                f"Dividend Yield: {yf_data.get('dividend_yield', 0)*100:.2f}%\n"
+                f"52-Week High: ${yf_data.get('52_week_high', 0):.2f}\n"
+                f"52-Week Low: ${yf_data.get('52_week_low', 0):.2f}\n"
+                f"Average Volume: {yf_data.get('avg_volume', 0):,.0f}\n"
+                f"Float Shares: {yf_data.get('float_shares', 0):,.0f}\n"
+            )
+
+        if not content_parts:
+            logger.warning(f"⚠️ No yfinance data available for vectorization: {symbol}")
+            return {'chunks_created': 0, 'vectors_stored': 0}
+
+        content = "\n".join(content_parts)
+
+        file_identifier = f"{symbol}_yfinance_{datetime.now().strftime('%Y%m%d')}"
+
+        metadata = {
+            'file_name': file_identifier,
+            'symbol': symbol,
+            'company_cik': cik or symbol,
+            'document_type': 'market_data',
+            'source': 'yfinance'
+        }
+
+        chunks = self._chunk_document(content, metadata)
+        vector_ids = self._store_in_rag_engine(chunks, metadata)
+
+        logger.info(f"✅ Vectorized yfinance data: {len(chunks)} chunks, {len(vector_ids)} vectors")
+
+        return {
+            'chunks_created': len(chunks),
+            'vectors_stored': len(vector_ids)
+        }
 
     def _process_sec_filings_for_vectorization(self, symbol: str, sec_data: Dict[str, Any]) -> Dict[str, Any]:
         """Process SEC filings and store in vector database"""
