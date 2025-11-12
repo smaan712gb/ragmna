@@ -298,10 +298,11 @@ class CompanyClassifier:
         try:
             # Prepare RAG context text
             context_text = ""
-            if rag_contexts.get('contexts'):
+            contexts_list = rag_contexts.get('contexts', {}).get('contexts', [])
+            if contexts_list:
                 context_parts = []
-                for ctx in rag_contexts['contexts'][:3]:
-                    if 'text' in ctx:
+                for ctx in contexts_list[:3]:
+                    if isinstance(ctx, dict) and 'text' in ctx:
                         context_parts.append(ctx['text'])
                 context_text = "\n\n".join(context_parts)
             model = GenerativeModel(GEMINI_MODEL)
