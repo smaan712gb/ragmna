@@ -1,0 +1,307 @@
+services:
+  # Core Services
+
+  fmp-api-proxy:
+    build:
+      context: ./services/fmp-api-proxy
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - FMP_API_KEY=${FMP_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/fmp-api-proxy:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  data-ingestion:
+    build:
+      context: ./services/data-ingestion
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - FMP_API_KEY=${FMP_API_KEY}
+      - PROJECT_ID=${PROJECT_ID}
+      - VERTEX_PROJECT=${VERTEX_PROJECT}
+      - VERTEX_LOCATION=${VERTEX_LOCATION}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - RAG_CORPUS_ID=${RAG_CORPUS_ID}
+      - RAG_CORPUS_NAME_PREFIX=${RAG_CORPUS_NAME_PREFIX:-ma-analysis}
+      - RAG_EMBEDDING_MODEL=${RAG_EMBEDDING_MODEL:-text-embedding-005}
+      - RAG_CHUNK_SIZE=${RAG_CHUNK_SIZE:-1000}
+      - RAG_CHUNK_OVERLAP=${RAG_CHUNK_OVERLAP:-200}
+      - MAX_EMBEDDING_QPM=${MAX_EMBEDDING_QPM:-1000}
+      - GOOGLE_CLOUD_KEY_PATH=/app/secrets/gcp-service-key.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-service-key.json
+      - PORT=8080
+    volumes:
+      - ./services/data-ingestion:/app
+      - ./secrets:/app/secrets:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  llm-orchestrator:
+    build:
+      context: ./services/llm-orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - VERTEX_PROJECT=${VERTEX_PROJECT}
+      - VERTEX_LOCATION=${VERTEX_LOCATION}
+      - RAG_CORPUS_ID=${RAG_CORPUS_ID}
+      - GOOGLE_CLOUD_KEY_PATH=/app/secrets/gcp-service-key.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-service-key.json
+      - DATA_INGESTION_URL=http://data-ingestion:8080
+      - PORT=8080
+    volumes:
+      - ./services/llm-orchestrator:/app
+      - ./secrets:/app/secrets:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  financial-normalizer:
+    build:
+      context: ./services/financial-normalizer
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/financial-normalizer:/app
+
+  three-statement-modeler:
+    build:
+      context: ./services/three-statement-modeler
+      dockerfile: Dockerfile
+    ports:
+      - "8004:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/three-statement-modeler:/app
+
+  dcf-valuation:
+    build:
+      context: ./services/dcf-valuation
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/dcf-valuation:/app
+
+  cca-valuation:
+    build:
+      context: ./services/cca-valuation
+      dockerfile: Dockerfile
+    ports:
+      - "8006:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/cca-valuation:/app
+
+  lbo-analysis:
+    build:
+      context: ./services/lbo-analysis
+      dockerfile: Dockerfile
+    ports:
+      - "8007:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/lbo-analysis:/app
+
+  mergers-model:
+    build:
+      context: ./services/mergers-model
+      dockerfile: Dockerfile
+    ports:
+      - "8008:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/mergers-model:/app
+
+  precedent-transactions:
+    build:
+      context: ./services/precedent-transactions
+      dockerfile: Dockerfile
+    ports:
+      - "8009:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - FMP_API_KEY=${FMP_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/precedent-transactions:/app
+
+  dd-agent:
+    build:
+      context: ./services/dd-agent
+      dockerfile: Dockerfile
+    ports:
+      - "8010:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - VERTEX_PROJECT=${VERTEX_PROJECT}
+      - VERTEX_LOCATION=${VERTEX_LOCATION}
+      - RAG_CORPUS_ID=${RAG_CORPUS_ID}
+      - GOOGLE_CLOUD_KEY_PATH=/app/secrets/gcp-service-key.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-service-key.json
+      - DATA_INGESTION_URL=http://data-ingestion:8080
+      - THREE_STATEMENT_MODELER_URL=http://three-statement-modeler:8080
+      - DCF_VALUATION_URL=http://dcf-valuation:8080
+      - CCA_VALUATION_URL=http://cca-valuation:8080
+      - LBO_ANALYSIS_URL=http://lbo-analysis:8080
+      - MERGERS_MODEL_URL=http://mergers-model:8080
+      - PORT=8080
+    volumes:
+      - ./services/dd-agent:/app
+      - ./secrets:/app/secrets:ro
+
+  board-reporting:
+    build:
+      context: ./services/board-reporting
+      dockerfile: Dockerfile
+    ports:
+      - "8011:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/board-reporting:/app
+
+  excel-exporter:
+    build:
+      context: ./services/excel-exporter
+      dockerfile: Dockerfile
+    ports:
+      - "8012:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/excel-exporter:/app
+
+  # Support Services
+
+  reporting-dashboard:
+    build:
+      context: ./services/reporting-dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "8015:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/reporting-dashboard:/app
+
+  run-manager:
+    build:
+      context: ./services/run-manager
+      dockerfile: Dockerfile
+    ports:
+      - "8013:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - PROJECT_ID=${PROJECT_ID}
+      - GOOGLE_CLOUD_KEY_PATH=/app/secrets/gcp-service-key.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/secrets/gcp-service-key.json
+      - PORT=8080
+      - DATA_INGESTION_URL=http://data-ingestion:8080
+      - LLM_ORCHESTRATOR_URL=http://llm-orchestrator:8080
+      - FINANCIAL_NORMALIZER_URL=http://financial-normalizer:8080
+      - THREE_STATEMENT_MODELER_URL=http://three-statement-modeler:8080
+      - DCF_VALUATION_URL=http://dcf-valuation:8080
+      - CCA_VALUATION_URL=http://cca-valuation:8080
+      - LBO_ANALYSIS_URL=http://lbo-analysis:8080
+      - MERGERS_MODEL_URL=http://mergers-model:8080
+      - PRECEDENT_TRANSACTIONS_URL=http://precedent-transactions:8080
+      - DD_AGENT_URL=http://dd-agent:8080
+      - BOARD_REPORTING_URL=http://board-reporting:8080
+      - EXCEL_EXPORTER_URL=http://excel-exporter:8080
+    volumes:
+      - ./services/run-manager:/app
+      - ./secrets:/app/secrets:ro
+    depends_on:
+      - data-ingestion
+      - llm-orchestrator
+      - financial-normalizer
+      - three-statement-modeler
+      - dcf-valuation
+      - cca-valuation
+      - lbo-analysis
+      - mergers-model
+      - precedent-transactions
+      - dd-agent
+      - board-reporting
+      - excel-exporter
+
+  qa-engine:
+    build:
+      context: ./services/qa-engine
+      dockerfile: Dockerfile
+    ports:
+      - "8014:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - PORT=8080
+    volumes:
+      - ./services/qa-engine:/app
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "8016:8080"
+    environment:
+      - SERVICE_API_KEY=${SERVICE_API_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ACCESS_TOKEN_EXPIRY_MINUTES=${ACCESS_TOKEN_EXPIRY_MINUTES:-60}
+      - REFRESH_TOKEN_EXPIRY_DAYS=${REFRESH_TOKEN_EXPIRY_DAYS:-7}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - PORT=8080
+    volumes:
+      - ./services/auth-service:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: ma-platform
+    driver: bridge
+
+volumes:
+  service-data:

@@ -1,0 +1,545 @@
+{
+  "test_start": "2025-11-11T08:52:11.713199",
+  "target_symbol": "NVDA",
+  "acquirer_symbol": "MSFT",
+  "phases": {
+    "data_ingestion": {
+      "status": "success"
+    },
+    "classification": {
+      "status": "success"
+    },
+    "3sm": {
+      "status": "success"
+    },
+    "dcf": {
+      "status": "success",
+      "value_per_share": 161.71663150277985,
+      "sensitivity_included": true,
+      "scenarios": 3
+    },
+    "cca": {
+      "status": "success",
+      "value_per_share": 180.45045317013734,
+      "multiples_count": 3
+    },
+    "lbo": {
+      "status": "success",
+      "irr": 10.0,
+      "moic": 3256.436323430026,
+      "sensitivity_included": true,
+      "exit_scenarios": 3
+    },
+    "mergers": {
+      "status": "success",
+      "eps_impact": 40.448582453007596
+    }
+  },
+  "detailed_analysis": {
+    "dcf": {
+      "wacc": 0.097,
+      "cash_flow_projections": [
+        60966971567.600006,
+        103027175154.14001,
+        157485103983.95,
+        216759886596.69348,
+        276609943555.1229
+      ],
+      "terminal_value": {
+        "value": 5326869182232.694,
+        "gordon_growth_value": 5558795981059.682,
+        "exit_multiple_value": 4978978983992.213,
+        "terminal_growth_rate": 0.045,
+        "exit_multiple": 18.0,
+        "method": "weighted_average"
+      },
+      "present_value_analysis": {
+        "cash_flow_pvs": [
+          {
+            "year": 1,
+            "fcf": 60966971567.600006,
+            "present_value": 55576090763.53693
+          },
+          {
+            "year": 2,
+            "fcf": 103027175154.14001,
+            "present_value": 85612767690.90144
+          },
+          {
+            "year": 3,
+            "fcf": 157485103983.95,
+            "present_value": 119294274086.97385
+          },
+          {
+            "year": 4,
+            "fcf": 216759886596.69348,
+            "present_value": 149676081486.52875
+          },
+          {
+            "year": 5,
+            "fcf": 276609943555.1229,
+            "present_value": 174114383790.4428
+          }
+        ],
+        "terminal_pv": 3353041229379.797,
+        "total_pv_cash_flows": 584273597818.3838,
+        "enterprise_value": 3937314827198.1807,
+        "discount_rate": 0.097
+      },
+      "sensitivity_analysis": {
+        "wacc_sensitivity": [
+          {
+            "wacc": 0.0776,
+            "enterprise_value": 4288194146413.269
+          },
+          {
+            "wacc": 0.0873,
+            "enterprise_value": 4108143629652.3647
+          },
+          {
+            "wacc": 0.097,
+            "enterprise_value": 3937314827198.1807
+          },
+          {
+            "wacc": 0.1067,
+            "enterprise_value": 3775157215988.3115
+          },
+          {
+            "wacc": 0.1164,
+            "enterprise_value": 3621157642328.3003
+          }
+        ],
+        "growth_sensitivity": [
+          {
+            "terminal_growth": 0.0225,
+            "enterprise_value": 2973964301519.4272
+          },
+          {
+            "terminal_growth": 0.031875,
+            "enterprise_value": 3343034131772.521
+          },
+          {
+            "terminal_growth": 0.041249999999999995,
+            "enterprise_value": 3836230586550.1963
+          },
+          {
+            "terminal_growth": 0.050624999999999996,
+            "enterprise_value": 4528832616035.827
+          },
+          {
+            "terminal_growth": 0.06,
+            "enterprise_value": 5572415403706.744
+          }
+        ],
+        "base_case_wacc": 0.097,
+        "base_case_growth": 0.045
+      },
+      "scenario_analysis": {
+        "base": {
+          "enterprise_value": 3937314827198.1807,
+          "wacc": 0.097,
+          "terminal_value": 5326869182232.694,
+          "fcf_adjustment": 1.0
+        },
+        "upside": {
+          "enterprise_value": 6014748167012.466,
+          "wacc": 0.0873,
+          "terminal_value": 8041039288511.526,
+          "fcf_adjustment": 1.2
+        },
+        "downside": {
+          "enterprise_value": 2536027911364.1157,
+          "wacc": 0.10670000000000002,
+          "terminal_value": 3457816172973.6255,
+          "fcf_adjustment": 0.8
+        }
+      },
+      "final_valuation": {
+        "enterprise_value": 3937314827198.1807,
+        "equity_value": 3937314827198.1807,
+        "equity_value_per_share": 161.71663150277985,
+        "current_market_price": 199.05,
+        "premium_discount": -0.18755774175945825,
+        "shares_outstanding": 24347000000,
+        "net_debt": 0
+      },
+      "assumptions": {
+        "risk_free_rate": 0.04,
+        "market_risk_premium": 0.06,
+        "terminal_growth_rate": 0.045,
+        "exit_multiple": 18.0,
+        "beta_adjustment": 0.95,
+        "classification": "hyper_growth"
+      },
+      "generated_at": "2025-11-11T08:52:46.399972"
+    },
+    "lbo": {
+      "purchase_price": 1000000000,
+      "financing_structure": {
+        "senior_debt": {
+          "amount": 300000000.0,
+          "percentage": 0.3,
+          "interest_rate": 0.08
+        },
+        "subordinate_debt": {
+          "amount": 200000000.0,
+          "percentage": 0.2,
+          "interest_rate": 0.12
+        },
+        "equity": {
+          "amount": 500000000.0,
+          "percentage": 0.5
+        },
+        "fees": {
+          "amount": 30000000.0,
+          "percentage": 0.03
+        },
+        "total_financing": 1030000000.0,
+        "leverage_ratio": 1.0
+      },
+      "lbo_model": {
+        "purchase_price": 1000000000,
+        "financing": {
+          "senior_debt": {
+            "amount": 300000000.0,
+            "percentage": 0.3,
+            "interest_rate": 0.08
+          },
+          "subordinate_debt": {
+            "amount": 200000000.0,
+            "percentage": 0.2,
+            "interest_rate": 0.12
+          },
+          "equity": {
+            "amount": 500000000.0,
+            "percentage": 0.5
+          },
+          "fees": {
+            "amount": 30000000.0,
+            "percentage": 0.03
+          },
+          "total_financing": 1030000000.0,
+          "leverage_ratio": 1.0
+        },
+        "debt_schedule": {
+          "schedule": [
+            {
+              "year": 1,
+              "senior_debt_balance": 240000000.0,
+              "subordinate_debt_balance": 160000000.0,
+              "total_debt_balance": 400000000.0,
+              "senior_interest": 24000000.0,
+              "subordinate_interest": 24000000.0,
+              "total_interest": 48000000.0
+            },
+            {
+              "year": 2,
+              "senior_debt_balance": 180000000.0,
+              "subordinate_debt_balance": 120000000.0,
+              "total_debt_balance": 300000000.0,
+              "senior_interest": 19200000.0,
+              "subordinate_interest": 19200000.0,
+              "total_interest": 38400000.0
+            },
+            {
+              "year": 3,
+              "senior_debt_balance": 120000000.0,
+              "subordinate_debt_balance": 80000000.0,
+              "total_debt_balance": 200000000.0,
+              "senior_interest": 14400000.0,
+              "subordinate_interest": 14400000.0,
+              "total_interest": 28800000.0
+            },
+            {
+              "year": 4,
+              "senior_debt_balance": 60000000.0,
+              "subordinate_debt_balance": 40000000.0,
+              "total_debt_balance": 100000000.0,
+              "senior_interest": 9600000.0,
+              "subordinate_interest": 9600000.0,
+              "total_interest": 19200000.0
+            },
+            {
+              "year": 5,
+              "senior_debt_balance": 0,
+              "subordinate_debt_balance": 0,
+              "total_debt_balance": 0,
+              "senior_interest": 4800000.0,
+              "subordinate_interest": 4800000.0,
+              "total_interest": 9600000.0
+            }
+          ]
+        },
+        "equity_cash_flows": [
+          {
+            "year": 1,
+            "free_cash_flow": 60966971567.600006,
+            "interest_payments": 48000000.0,
+            "principal_payments": 100000000.0,
+            "debt_service": 148000000.0,
+            "equity_cash_flow": 60818971567.600006,
+            "cumulative_distributions": 60818971567.600006,
+            "distribution": 60818971567.600006
+          },
+          {
+            "year": 2,
+            "free_cash_flow": 103027175154.14001,
+            "interest_payments": 48000000.0,
+            "principal_payments": 100000000.0,
+            "debt_service": 148000000.0,
+            "equity_cash_flow": 102879175154.14001,
+            "cumulative_distributions": 163698146721.74002,
+            "distribution": 102879175154.14001
+          },
+          {
+            "year": 3,
+            "free_cash_flow": 157485103983.95,
+            "interest_payments": 48000000.0,
+            "principal_payments": 100000000.0,
+            "debt_service": 148000000.0,
+            "equity_cash_flow": 157337103983.95,
+            "cumulative_distributions": 321035250705.69006,
+            "distribution": 157337103983.95
+          },
+          {
+            "year": 4,
+            "free_cash_flow": 216759886596.69348,
+            "interest_payments": 48000000.0,
+            "principal_payments": 100000000.0,
+            "debt_service": 148000000.0,
+            "equity_cash_flow": 216611886596.69348,
+            "cumulative_distributions": 537647137302.38354,
+            "distribution": 216611886596.69348
+          },
+          {
+            "year": 5,
+            "free_cash_flow": 276609943555.1229,
+            "interest_payments": 48000000.0,
+            "principal_payments": 100000000.0,
+            "debt_service": 148000000.0,
+            "equity_cash_flow": 276461943555.1229,
+            "cumulative_distributions": 814109080857.5065,
+            "distribution": 276461943555.1229
+          }
+        ],
+        "exit_assumptions": {
+          "methodology": "exit_multiple_method",
+          "assumptions": "Based on industry comparables and market conditions",
+          "sensitivity": "Multiples vary by market conditions and company performance"
+        }
+      },
+      "returns_analysis": {
+        "irr": 0.1,
+        "money_multiple": 3256.436323430026,
+        "total_investment": 500000000.0,
+        "total_distributions": 1628218161715.013,
+        "equity_cash_flows": [
+          -500000000.0,
+          60818971567.600006,
+          102879175154.14001,
+          157337103983.95,
+          216611886596.69348,
+          1090571024412.6294
+        ],
+        "payback_period": 0.9917788810446383,
+        "returns_assessment": {
+          "irr_hurdle_rate": 0.25,
+          "money_multiple_threshold": 2.5,
+          "irr_attractive": false,
+          "multiple_attractive": true,
+          "overall_attractiveness": "marginal",
+          "required_improvements": [
+            "Consider higher leverage to increase returns",
+            "Look for operational improvements to boost cash flows",
+            "Explore faster debt paydown schedules"
+          ]
+        }
+      },
+      "risk_assessment": {
+        "leverage_risk": "low",
+        "business_risk": "high",
+        "debt_service_coverage": {
+          "average": 1101.1474065641978,
+          "minimum": 411.9389970783784,
+          "ratios": [
+            411.9389970783784,
+            696.1295618522973,
+            1064.0885404320948,
+            1464.593828356037,
+            1868.986105102182
+          ]
+        },
+        "overall_risk": "moderate",
+        "risk_mitigation": [
+          "Develop detailed operational improvement plans",
+          "Create multiple exit scenarios and timing flexibility"
+        ]
+      },
+      "exit_scenarios": {
+        "3_year_exit": {
+          "exit_multiple": 12.0,
+          "exit_value": 1889821247807.4001,
+          "remaining_debt": 200000000.0,
+          "equity_proceeds": 1889621247807.4001,
+          "total_return": 2210656498513.0903,
+          "irr": 0.1,
+          "money_multiple": 4421.312997026181
+        },
+        "5_year_exit": {
+          "exit_multiple": 10.5,
+          "exit_value": 2904404407328.7905,
+          "remaining_debt": 0,
+          "equity_proceeds": 2904404407328.7905,
+          "total_return": 3718513488186.297,
+          "irr": 0.1,
+          "money_multiple": 7437.026976372594
+        },
+        "7_year_exit": {
+          "exit_multiple": 9.0,
+          "exit_value": 2489489491996.1064,
+          "remaining_debt": 0,
+          "equity_proceeds": 2489489491996.1064,
+          "total_return": 3303598572853.613,
+          "irr": 0.1,
+          "money_multiple": 6607.197145707226
+        }
+      },
+      "summary": {
+        "purchase_price": 1000000000,
+        "equity_investment": 500000000.0,
+        "leverage_ratio": 1.0,
+        "irr": 0.1,
+        "money_multiple": 3256.436323430026,
+        "payback_period": 0.9917788810446383,
+        "key_assumptions": {
+          "senior_debt_ratio": 0.3,
+          "subordinate_debt_ratio": 0.2,
+          "equity_ratio": 0.5,
+          "senior_interest_rate": 0.08,
+          "subordinate_interest_rate": 0.12
+        },
+        "recommendation": "requires_improvement"
+      },
+      "generated_at": "2025-11-11T08:52:46.421379"
+    },
+    "mergers": {
+      "transaction_structure": {
+        "structure_type": "cash_and_stock",
+        "purchase_price": 3937314827198.181,
+        "equity_value": 3937314827198.181,
+        "enterprise_value": 3938995827198.181,
+        "financing_mix": {
+          "cash": 0.6,
+          "stock": 0.4
+        },
+        "exchange_ratio": 0.4187760611960395,
+        "transaction_fees": 78746296543.96362,
+        "premium_paid": -0.18755781855057554
+      },
+      "synergies": {
+        "cost_synergies": 19679840000.0,
+        "revenue_synergies": 20611050000.0,
+        "total_ebitda_impact": 40290890000.0,
+        "realization_schedule": {
+          "year_1": 0.3,
+          "year_2": 0.5,
+          "year_3": 0.2
+        },
+        "payback_period": 1.5
+      },
+      "accretion_dilution_analysis": {
+        "acquirer_eps": 13.70113370537547,
+        "pro_forma_eps": 19.243048069191083,
+        "eps_change": 5.5419143638156125,
+        "eps_accretion_dilution": 0.404485824530076,
+        "is_accretive": true,
+        "combined_shares_outstanding": 10544879494.682358,
+        "synergy_impact_on_eps": 2.6746273406180423
+      },
+      "combined_entity": {
+        "combined_financials": {
+          "revenue": 412221000000,
+          "ebitda": 286288890000.0,
+          "net_income": 202915623000.0,
+          "total_assets": 730604000000,
+          "total_liabilities": 307798000000,
+          "shareholders_equity": 451009623000.0,
+          "cash": -2323557896318.9087,
+          "debt": 2433246896318.9087
+        },
+        "financial_ratios": {
+          "debt_to_equity": 5.395110818553219,
+          "debt_to_ebitda": 8.499271125466688,
+          "ebitda_margin": 0.6945034095788424,
+          "net_margin": 0.49224960154868386
+        },
+        "credit_metrics": {
+          "credit_rating": "CCC",
+          "quality_assessment": "distressed",
+          "debt_to_ebitda": 8.499271125466688,
+          "refinancing_needs": true
+        },
+        "size_category": "mega_cap"
+      },
+      "transaction_risks": {
+        "risk_categories": {
+          "integration_risk": {
+            "complexity_level": "high",
+            "severity_score": 3,
+            "size_ratio": 0.46320867231758744,
+            "integration_challenges": [
+              "cultural_integration",
+              "system_integration",
+              "process_harmonization"
+            ]
+          },
+          "financing_risk": {
+            "leverage_ratio": 4.0,
+            "risk_level": "moderate",
+            "severity_score": 2,
+            "financing_concerns": [
+              "interest_rate_risk",
+              "refinancing_risk",
+              "covenant_compliance"
+            ]
+          },
+          "regulatory_risk": {
+            "combined_market_share": 0.15,
+            "risk_level": "low",
+            "severity_score": 1,
+            "regulatory_hurdles": [
+              "antitrust_review",
+              "CFIUS_review",
+              "foreign_investment_rules"
+            ]
+          },
+          "execution_risk": {
+            "structure_complexity": 0,
+            "risk_level": "low",
+            "severity_score": 1,
+            "execution_challenges": [
+              "deal_timing",
+              "stakeholder_management",
+              "contingency_planning"
+            ]
+          }
+        },
+        "overall_risk_score": 1.75,
+        "risk_level": "low",
+        "mitigation_strategies": [
+          "Establish integration management office",
+          "Develop detailed integration plan with milestones",
+          "Conduct cultural assessment and change management"
+        ]
+      },
+      "valuation_impact": {
+        "eps_impact": 0.404485824530076,
+        "synergy_value": 322327120000.0,
+        "total_value_creation": 452703870901.60474,
+        "value_creation_per_share": 452.7038709016047,
+        "break_even_synergy": 0.05
+      },
+      "generated_at": "2025-11-11T08:52:46.423386"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "test_metadata": {
+    "test_name": "MSFT_NVDA_PRODUCTION_20251110_210226",
+    "acquirer": "MSFT",
+    "target": "NVDA",
+    "start_time": "2025-11-10T21:02:26.103410",
+    "test_type": "comprehensive_production_ma_analysis"
+  },
+  "data_fetched": {
+    "target": {
+      "status": "failed",
+      "error": "name 'data_ingestion' is not defined"
+    }
+  },
+  "classifications": {},
+  "valuations": {},
+  "models": {},
+  "due_diligence": {},
+  "reports": {},
+  "confirmations": {
+    "services_imported": false
+  }
+}

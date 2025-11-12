@@ -1,0 +1,185 @@
+{
+  "test_timestamp": "2025-11-11T21:46:18.917686",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "workflow_data": {},
+  "steps": [
+    {
+      "step": "Data Ingestion - PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.0,
+      "details": null
+    },
+    {
+      "step": "Data Ingestion - PLTR",
+      "status": "success",
+      "elapsed_seconds": 61.67,
+      "details": {
+        "shares_outstanding": "2,250,163,000",
+        "sec_filings": 20
+      }
+    },
+    {
+      "step": "Data Ingestion - NVDA",
+      "status": "running",
+      "elapsed_seconds": 61.67,
+      "details": null
+    },
+    {
+      "step": "Data Ingestion - NVDA",
+      "status": "success",
+      "elapsed_seconds": 125.77,
+      "details": {
+        "shares_outstanding": "24,555,000,000",
+        "sec_filings": 25
+      }
+    },
+    {
+      "step": "Classification - PLTR",
+      "status": "running",
+      "elapsed_seconds": 125.77,
+      "details": null
+    },
+    {
+      "step": "Classification - PLTR",
+      "status": "success",
+      "elapsed_seconds": 205.53,
+      "details": {
+        "classification": "growth",
+        "industry": "technology",
+        "growth_stage": "high_growth"
+      }
+    },
+    {
+      "step": "Classification - NVDA",
+      "status": "running",
+      "elapsed_seconds": 205.53,
+      "details": null
+    },
+    {
+      "step": "Classification - NVDA",
+      "status": "success",
+      "elapsed_seconds": 278.29,
+      "details": {
+        "classification": "hyper_growth",
+        "industry": "technology",
+        "growth_stage": "high_growth"
+      }
+    },
+    {
+      "step": "Financial Normalization - PLTR",
+      "status": "running",
+      "elapsed_seconds": 278.29,
+      "details": null
+    },
+    {
+      "step": "Financial Normalization - PLTR",
+      "status": "success",
+      "elapsed_seconds": 278.41,
+      "details": {
+        "normalized": "skipped - using raw data"
+      }
+    },
+    {
+      "step": "Financial Normalization - NVDA",
+      "status": "running",
+      "elapsed_seconds": 278.41,
+      "details": null
+    },
+    {
+      "step": "Financial Normalization - NVDA",
+      "status": "success",
+      "elapsed_seconds": 278.49,
+      "details": {
+        "normalized": "skipped - using raw data"
+      }
+    },
+    {
+      "step": "3-Statement Model - PLTR",
+      "status": "running",
+      "elapsed_seconds": 278.5,
+      "details": null
+    },
+    {
+      "step": "3-Statement Model - PLTR",
+      "status": "success",
+      "elapsed_seconds": 278.55,
+      "details": {
+        "3SM": "skipped - using normalized data"
+      }
+    },
+    {
+      "step": "3-Statement Model - NVDA",
+      "status": "running",
+      "elapsed_seconds": 278.55,
+      "details": null
+    },
+    {
+      "step": "3-Statement Model - NVDA",
+      "status": "success",
+      "elapsed_seconds": 278.59,
+      "details": {
+        "3SM": "skipped - using normalized data"
+      }
+    },
+    {
+      "step": "DCF Valuation - PLTR",
+      "status": "running",
+      "elapsed_seconds": 278.6,
+      "details": null
+    },
+    {
+      "step": "DCF Valuation - PLTR",
+      "status": "success",
+      "elapsed_seconds": 278.64,
+      "details": {
+        "DCF": "skipped"
+      }
+    },
+    {
+      "step": "CCA Valuation - PLTR",
+      "status": "running",
+      "elapsed_seconds": 278.64,
+      "details": null
+    },
+    {
+      "step": "CCA Valuation - PLTR",
+      "status": "success",
+      "elapsed_seconds": 278.7,
+      "details": {
+        "CCA": "skipped"
+      }
+    },
+    {
+      "step": "Merger Model Analysis",
+      "status": "running",
+      "elapsed_seconds": 278.7,
+      "details": null
+    },
+    {
+      "step": "Merger Model Analysis",
+      "status": "success",
+      "elapsed_seconds": 279.04,
+      "details": {
+        "EPS_accretion": "8.48%",
+        "is_accretive": true,
+        "synergies": "$13361M"
+      }
+    },
+    {
+      "step": "Due Diligence - PLTR",
+      "status": "running",
+      "elapsed_seconds": 279.04,
+      "details": null
+    },
+    {
+      "step": "Due Diligence - PLTR",
+      "status": "success",
+      "elapsed_seconds": 279.11,
+      "details": {
+        "DD": "skipped"
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,126 @@
+{
+  "test_timestamp": "2025-11-11T19:48:47.511169",
+  "target": "CRWV",
+  "acquirer": "MSFT",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.58,
+      "timestamp": "2025-11-11T19:48:48.092040"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 1.18,
+      "timestamp": "2025-11-11T19:48:48.695011"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 1.76,
+      "timestamp": "2025-11-11T19:48:49.275900"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 2.35,
+      "timestamp": "2025-11-11T19:48:49.856417"
+    },
+    {
+      "step": "Starting data ingestion for CRWV",
+      "status": "running",
+      "elapsed_seconds": 2.35,
+      "timestamp": "2025-11-11T19:48:49.859736"
+    },
+    {
+      "step": "Data ingestion for CRWV",
+      "status": "success",
+      "elapsed_seconds": 10.6,
+      "timestamp": "2025-11-11T19:48:58.115970",
+      "details": {
+        "shares_outstanding": 404407000,
+        "sec_filings": 20,
+        "analyst_reports": 6,
+        "news": 108,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting data ingestion for MSFT",
+      "status": "running",
+      "elapsed_seconds": 10.61,
+      "timestamp": "2025-11-11T19:48:58.116971"
+    },
+    {
+      "step": "Data ingestion for MSFT",
+      "status": "success",
+      "elapsed_seconds": 19.07,
+      "timestamp": "2025-11-11T19:49:06.583095",
+      "details": {
+        "shares_outstanding": 7433000000,
+        "sec_filings": 24,
+        "analyst_reports": 20,
+        "news": 146,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for CRWV",
+      "status": "running",
+      "elapsed_seconds": 19.07,
+      "timestamp": "2025-11-11T19:49:06.585907"
+    },
+    {
+      "step": "Classification for CRWV",
+      "status": "success",
+      "elapsed_seconds": 38.13,
+      "timestamp": "2025-11-11T19:49:25.644688",
+      "details": {
+        "classification": "hyper_growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting classification for MSFT",
+      "status": "running",
+      "elapsed_seconds": 38.13,
+      "timestamp": "2025-11-11T19:49:25.646051"
+    },
+    {
+      "step": "Classification for MSFT",
+      "status": "success",
+      "elapsed_seconds": 56.92,
+      "timestamp": "2025-11-11T19:49:44.431083",
+      "details": {
+        "classification": "mature_growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting merger model analysis",
+      "status": "running",
+      "elapsed_seconds": 56.92,
+      "timestamp": "2025-11-11T19:49:44.432796"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 57.82,
+      "timestamp": "2025-11-11T19:49:45.328979",
+      "details": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 57.82,
+      "timestamp": "2025-11-11T19:49:45.328979",
+      "details": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+    }
+  ],
+  "errors": [
+    "Merger model: Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+}

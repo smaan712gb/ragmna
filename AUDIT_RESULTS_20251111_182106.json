@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-11-11T18:20:38.090847",
+  "overall_status": "FAIL",
+  "tests_passed": 2,
+  "tests_failed": 6,
+  "warnings": 0,
+  "critical_issues": [
+    "Missing environment variable: GOOGLE_APPLICATION_CREDENTIALS",
+    "data-ingestion is unreachable: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B716D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "llm-orchestrator is unreachable: HTTPConnectionPool(host='localhost', port=8081): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B74550>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "mergers-model is unreachable: HTTPConnectionPool(host='localhost', port=8082): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B740D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "dd-agent is unreachable: HTTPConnectionPool(host='localhost', port=8083): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B767D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "GCP credentials file not found",
+    "Data ingestion test error: HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ingest/comprehensive (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8C650>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "Classification test error: HTTPConnectionPool(host='localhost', port=8081): Max retries exceeded with url: /classify (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8F790>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))",
+    "Merger model test error: HTTPConnectionPool(host='localhost', port=8082): Max retries exceeded with url: /analyze (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8F6D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+  ],
+  "detailed_results": {
+    "environment": {
+      "status": "FAIL",
+      "missing": [
+        "GOOGLE_APPLICATION_CREDENTIALS"
+      ],
+      "present": [
+        "FMP_API_KEY",
+        "SERVICE_API_KEY",
+        "PROJECT_ID",
+        "VERTEX_PROJECT",
+        "VERTEX_LOCATION"
+      ],
+      "issues": []
+    },
+    "docker": {
+      "status": "PASS",
+      "running": [
+        "data-ingestion",
+        "llm-orchestrator",
+        "mergers-model",
+        "dd-agent"
+      ],
+      "not_running": [],
+      "issues": []
+    },
+    "health": {
+      "status": "FAIL",
+      "healthy": [],
+      "unhealthy": [],
+      "unreachable": [
+        "data-ingestion",
+        "llm-orchestrator",
+        "mergers-model",
+        "dd-agent"
+      ]
+    },
+    "api_keys": {
+      "status": "PASS",
+      "valid": [
+        "FMP_API_KEY",
+        "SERVICE_API_KEY"
+      ],
+      "invalid": [],
+      "issues": []
+    },
+    "gcp_auth": {
+      "status": "FAIL",
+      "issues": [
+        "GOOGLE_APPLICATION_CREDENTIALS file not found"
+      ]
+    },
+    "data_ingestion": {
+      "status": "FAIL",
+      "test_symbol": "AAPL",
+      "shares_outstanding": 0,
+      "issues": [
+        "HTTPConnectionPool(host='localhost', port=8080): Max retries exceeded with url: /ingest/comprehensive (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8C650>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+      ]
+    },
+    "classification": {
+      "status": "FAIL",
+      "test_symbol": "AAPL",
+      "classification": null,
+      "issues": [
+        "HTTPConnectionPool(host='localhost', port=8081): Max retries exceeded with url: /classify (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8F790>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+      ]
+    },
+    "merger_model": {
+      "status": "FAIL",
+      "test_target": "AAPL",
+      "test_acquirer": "MSFT",
+      "issues": [
+        "HTTPConnectionPool(host='localhost', port=8082): Max retries exceeded with url: /analyze (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x000002D621B8F6D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+      ]
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "test_timestamp": "2025-11-11T19:54:46.285316",
+  "target": "CRWV",
+  "acquirer": "MSFT",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.57,
+      "timestamp": "2025-11-11T19:54:46.860192"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 1.16,
+      "timestamp": "2025-11-11T19:54:47.445146"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 1.79,
+      "timestamp": "2025-11-11T19:54:48.078802"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 2.38,
+      "timestamp": "2025-11-11T19:54:48.670146"
+    },
+    {
+      "step": "Starting data ingestion for CRWV",
+      "status": "running",
+      "elapsed_seconds": 2.38,
+      "timestamp": "2025-11-11T19:54:48.670146"
+    },
+    {
+      "step": "Data ingestion for CRWV",
+      "status": "error",
+      "elapsed_seconds": 302.98,
+      "timestamp": "2025-11-11T19:59:49.262695",
+      "details": "HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=300)"
+    }
+  ],
+  "errors": [
+    "Data ingestion CRWV: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=300)"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=300)"
+}

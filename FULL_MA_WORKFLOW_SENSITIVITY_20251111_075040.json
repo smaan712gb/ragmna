@@ -1,0 +1,173 @@
+{
+  "test_start": "2025-11-11T07:50:02.541829",
+  "target_symbol": "NVDA",
+  "acquirer_symbol": "MSFT",
+  "phases": {
+    "data_ingestion": {
+      "status": "success"
+    },
+    "classification": {
+      "status": "success"
+    },
+    "3sm": {
+      "status": "success"
+    },
+    "dcf": {
+      "status": "success",
+      "value_per_share": 0,
+      "sensitivity_included": true,
+      "scenarios": 3
+    },
+    "cca": {
+      "status": "success",
+      "value_per_share": 0
+    },
+    "lbo": {
+      "status": "failed"
+    },
+    "mergers": {
+      "status": "failed"
+    }
+  },
+  "detailed_analysis": {
+    "dcf": {
+      "wacc": 0.118,
+      "cash_flow_projections": [
+        46623521227.5,
+        66982423446.00001,
+        89044722580.04999,
+        109353498290.91003,
+        128700701245.89894
+      ],
+      "terminal_value": {
+        "value": 1521593290639.0142,
+        "gordon_growth_value": 1506383207764.499,
+        "exit_multiple_value": 1544408414950.7874,
+        "terminal_growth_rate": 0.03,
+        "exit_multiple": 12.0,
+        "method": "weighted_average"
+      },
+      "present_value_analysis": {
+        "cash_flow_pvs": [
+          {
+            "year": 1,
+            "fcf": 46623521227.5,
+            "present_value": 41702612904.740616
+          },
+          {
+            "year": 2,
+            "fcf": 66982423446.00001,
+            "present_value": 53589196979.976395
+          },
+          {
+            "year": 3,
+            "fcf": 89044722580.04999,
+            "present_value": 63721028141.94575
+          },
+          {
+            "year": 4,
+            "fcf": 109353498290.91003,
+            "present_value": 69994750009.03816
+          },
+          {
+            "year": 5,
+            "fcf": 128700701245.89894,
+            "present_value": 73683779708.66072
+          }
+        ],
+        "terminal_pv": 871143231919.2114,
+        "total_pv_cash_flows": 302691367744.36163,
+        "enterprise_value": 1173834599663.573,
+        "discount_rate": 0.118
+      },
+      "sensitivity_analysis": {
+        "wacc_sensitivity": [
+          {
+            "wacc": 0.0944,
+            "enterprise_value": 1293879754881.401
+          },
+          {
+            "wacc": 0.10619999999999999,
+            "enterprise_value": 1232004215132.6282
+          },
+          {
+            "wacc": 0.118,
+            "enterprise_value": 1173834599663.573
+          },
+          {
+            "wacc": 0.12979999999999997,
+            "enterprise_value": 1119110533354.7954
+          },
+          {
+            "wacc": 0.14159999999999998,
+            "enterprise_value": 1067592479922.9886
+          }
+        ],
+        "growth_sensitivity": [
+          {
+            "terminal_growth": 0.015,
+            "enterprise_value": 1028798517300.5813
+          },
+          {
+            "terminal_growth": 0.0225,
+            "enterprise_value": 1091609323263.7917
+          },
+          {
+            "terminal_growth": 0.03,
+            "enterprise_value": 1165126516607.0952
+          },
+          {
+            "terminal_growth": 0.0375,
+            "enterprise_value": 1252342565852.8774
+          },
+          {
+            "terminal_growth": 0.045,
+            "enterprise_value": 1357479721108.0667
+          }
+        ],
+        "base_case_wacc": 0.118,
+        "base_case_growth": 0.03
+      },
+      "scenario_analysis": {
+        "base": {
+          "enterprise_value": 1173834599663.573,
+          "wacc": 0.118,
+          "terminal_value": 1521593290639.0142,
+          "fcf_adjustment": 1.0
+        },
+        "upside": {
+          "enterprise_value": 1700175157647.1082,
+          "wacc": 0.1062,
+          "terminal_value": 2193254520369.0095,
+          "fcf_adjustment": 1.2
+        },
+        "downside": {
+          "enterprise_value": 787362432519.155,
+          "wacc": 0.1298,
+          "terminal_value": 1018603892307.1814,
+          "fcf_adjustment": 0.8
+        }
+      },
+      "final_valuation": {
+        "enterprise_value": 1173834599663.573,
+        "equity_value": 1173834599663.573,
+        "equity_value_per_share": 0,
+        "current_market_price": 0,
+        "premium_discount": 0,
+        "shares_outstanding": 0,
+        "net_debt": 0
+      },
+      "assumptions": {
+        "risk_free_rate": 0.04,
+        "market_risk_premium": 0.06,
+        "terminal_growth_rate": 0.03,
+        "exit_multiple": 12.0,
+        "beta_adjustment": 1.3,
+        "classification": "hyper_growth"
+      },
+      "generated_at": "2025-11-11T07:50:40.188253"
+    },
+    "lbo": {},
+    "mergers": {}
+  }
+}

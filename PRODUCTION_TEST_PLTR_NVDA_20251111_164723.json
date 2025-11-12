@@ -1,0 +1,35 @@
+{
+  "test_timestamp": "2025-11-11T16:47:19.331848",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "error",
+      "elapsed_seconds": 4.08,
+      "timestamp": "2025-11-11T16:47:23.406938",
+      "details": "HTTPConnectionPool(host='localhost', port=8001): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000022ACF76CE50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 4.09,
+      "timestamp": "2025-11-11T16:47:23.419329"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 4.09,
+      "timestamp": "2025-11-11T16:47:23.426132"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 4.1,
+      "timestamp": "2025-11-11T16:47:23.431786"
+    }
+  ],
+  "errors": [],
+  "overall_status": "FAILED",
+  "failure_reason": "\u26a0\ufe0f  Some services are not healthy. Please start all services with 'docker-compose up -d'"
+}

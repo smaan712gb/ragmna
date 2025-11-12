@@ -1,0 +1,38 @@
+{
+  "test_start": "2025-11-10T21:30:48.683712",
+  "data_sources": [
+    "FMP",
+    "yfinance"
+  ],
+  "confirmations": {
+    "nvda_data": {
+      "status": "success",
+      "sources": [
+        "FMP",
+        "yfinance"
+      ],
+      "shares_outstanding": 24347000000,
+      "market_cap": 4846270808064
+    }
+  },
+  "valuations": {
+    "dcf": {
+      "wacc": 0.16352600000000003,
+      "enterprise_value": 739436059309.0938,
+      "equity_value": 739436059309.0938,
+      "value_per_share": 30.370725728389278,
+      "current_price": 199.05,
+      "premium": -0.8474216240723974
+    },
+    "lbo": {
+      "purchase_price": 6300152050483.2,
+      "equity_investment": 2520060820193.2803,
+      "exit_value": 558031339962.8442,
+      "irr": -0.26031039828302116,
+      "multiple": 0.22143566357261374
+    }
+  },
+  "validation": {
+    "status": "passed"
+  }
+}

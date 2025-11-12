@@ -1,0 +1,98 @@
+{
+  "test_start_time": "2025-11-10T17:03:05.331561",
+  "steps_completed": [
+    "fmp_data_ingestion",
+    "sec_edgar_api",
+    "llm_classification",
+    "financial_modeling",
+    "dcf_valuation",
+    "lbo_analysis",
+    "mergers_model",
+    "due_diligence",
+    "final_report"
+  ],
+  "real_api_calls": [
+    {
+      "api": "fmp_profile",
+      "endpoint": "profile/HOOD",
+      "status": "success",
+      "response_time": 0.210184,
+      "data_points": 36
+    },
+    {
+      "api": "fmp_profile",
+      "endpoint": "profile/MS",
+      "status": "success",
+      "response_time": 0.215967,
+      "data_points": 36
+    },
+    {
+      "api": "sec_edgar",
+      "endpoint": "submissions/CIK0001783876.json",
+      "status": "success",
+      "response_time": 0.280357,
+      "filings_count": 2,
+      "recent_filings": 0
+    },
+    {
+      "api": "llm_orchestrator",
+      "endpoint": "classify_companies",
+      "status": "success",
+      "companies_classified": 2,
+      "classification_method": "llm_powered_analysis"
+    }
+  ],
+  "real_data_retrieved": [
+    {
+      "company": "HOOD",
+      "data_type": "company_profile",
+      "market_cap": 120260951500,
+      "sector": "Financial Services"
+    },
+    {
+      "company": "MS",
+      "data_type": "company_profile",
+      "market_cap": 262347476642,
+      "sector": "Financial Services"
+    }
+  ],
+  "valuation_models_executed": [
+    {
+      "model": "three_statement_modeler",
+      "status": "success",
+      "projections_years": 5,
+      "base_revenue": 2000000000,
+      "growth_rate": 0.25
+    },
+    {
+      "model": "dcf_valuation",
+      "status": "success",
+      "wacc": 0.14400000000000002,
+      "enterprise_value": 4955000550.265966,
+      "equity_value_per_share": 4.955000550265966
+    },
+    {
+      "model": "lbo_analysis",
+      "status": "success",
+      "purchase_price": 150000000000,
+      "irr": 0.18,
+      "money_multiple": 0.3131510416666667
+    },
+    {
+      "model": "mergers_model",
+      "status": "success",
+      "purchase_price": 150000000000,
+      "total_synergies": 3500000000,
+      "eps_accretion": -0.11764705882352941
+    },
+    {
+      "model": "due_diligence",
+      "status": "success",
+      "areas_covered": 6,
+      "risk_level": "moderate"
+    }
+  ],
+  "errors": [],
+  "test_status": "completed",
+  "test_end_time": "2025-11-10T17:03:06.390132"
+}

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-11-11T20:45:39.381086",
+  "scenario": "MSFT_acquires_CRWV",
+  "target": {
+    "symbol": "CRWV",
+    "vectors": 22,
+    "status": 200
+  },
+  "acquirer": {
+    "symbol": "MSFT",
+    "vectors": 2,
+    "status": 200
+  },
+  "total_vectors": 24,
+  "auth_working": true
+}

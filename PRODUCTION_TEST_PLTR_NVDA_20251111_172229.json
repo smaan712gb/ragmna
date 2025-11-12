@@ -1,0 +1,56 @@
+{
+  "test_timestamp": "2025-11-11T17:22:29.357161",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.02,
+      "timestamp": "2025-11-11T17:22:29.372558"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T17:22:29.388314"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.05,
+      "timestamp": "2025-11-11T17:22:29.406981"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.05,
+      "timestamp": "2025-11-11T17:22:29.409985"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.05,
+      "timestamp": "2025-11-11T17:22:29.410941"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "error",
+      "elapsed_seconds": 0.07,
+      "timestamp": "2025-11-11T17:22:29.423368",
+      "details": "Status 401: {\"error\":\"Invalid API key\"}\n"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "error",
+      "elapsed_seconds": 0.07,
+      "timestamp": "2025-11-11T17:22:29.423368",
+      "details": "Status 401: {\"error\":\"Invalid API key\"}\n"
+    }
+  ],
+  "errors": [
+    "Data ingestion PLTR: Status 401: {\"error\":\"Invalid API key\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 401: {\"error\":\"Invalid API key\"}\n"
+}

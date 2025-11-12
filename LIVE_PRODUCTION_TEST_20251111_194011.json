@@ -1,0 +1,47 @@
+{
+  "test_id": "20251111_194011",
+  "steps": {
+    "target_ingestion": {
+      "success": true,
+      "vectors": 2
+    },
+    "acquirer_ingestion": {
+      "success": true,
+      "vectors": 2
+    },
+    "peer_SNOW": {
+      "success": true,
+      "vectors": 2
+    },
+    "peer_DDOG": {
+      "success": true,
+      "vectors": 2
+    },
+    "normalization": {
+      "success": false
+    },
+    "three_statement": {
+      "success": false
+    },
+    "dcf": {
+      "success": false
+    },
+    "cca": {
+      "success": false
+    },
+    "lbo": {
+      "success": false
+    },
+    "merger_model": {
+      "success": false
+    },
+    "dd": {
+      "success": false
+    },
+    "board_report": {
+      "success": true
+    }
+  },
+  "elapsed_seconds": 27.617498874664307,
+  "end_time": "2025-11-11T19:40:39.260976"
+}

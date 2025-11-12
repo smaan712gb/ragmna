@@ -1,0 +1,68 @@
+{
+  "test_timestamp": "2025-11-11T20:52:48.637678",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T20:52:48.647437"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T20:52:48.649534"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.04,
+      "timestamp": "2025-11-11T20:52:48.681794"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.06,
+      "timestamp": "2025-11-11T20:52:48.696934"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.06,
+      "timestamp": "2025-11-11T20:52:48.697939"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "success",
+      "elapsed_seconds": 888.51,
+      "timestamp": "2025-11-11T21:07:37.148182",
+      "details": {
+        "shares_outstanding": 2250163000,
+        "sec_filings": 20,
+        "analyst_reports": 8,
+        "news": 147,
+        "vectors_stored": 62
+      }
+    },
+    {
+      "step": "Starting data ingestion for NVDA",
+      "status": "running",
+      "elapsed_seconds": 888.52,
+      "timestamp": "2025-11-11T21:07:37.154039"
+    },
+    {
+      "step": "Data ingestion for NVDA",
+      "status": "error",
+      "elapsed_seconds": 1788.52,
+      "timestamp": "2025-11-11T21:22:37.156129",
+      "details": "HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=900)"
+    }
+  ],
+  "errors": [
+    "Data ingestion NVDA: HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=900)"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "HTTPConnectionPool(host='localhost', port=8001): Read timed out. (read timeout=900)"
+}

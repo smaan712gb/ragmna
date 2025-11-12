@@ -1,0 +1,126 @@
+{
+  "test_timestamp": "2025-11-11T18:12:56.074425",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 4.43,
+      "timestamp": "2025-11-11T18:13:00.501014"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 4.45,
+      "timestamp": "2025-11-11T18:13:00.520219"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 4.46,
+      "timestamp": "2025-11-11T18:13:00.537778"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 4.48,
+      "timestamp": "2025-11-11T18:13:00.554200"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 4.48,
+      "timestamp": "2025-11-11T18:13:00.554200"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "success",
+      "elapsed_seconds": 12.28,
+      "timestamp": "2025-11-11T18:13:08.350899",
+      "details": {
+        "shares_outstanding": 2250163000,
+        "sec_filings": 20,
+        "analyst_reports": 8,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting data ingestion for NVDA",
+      "status": "running",
+      "elapsed_seconds": 12.28,
+      "timestamp": "2025-11-11T18:13:08.351269"
+    },
+    {
+      "step": "Data ingestion for NVDA",
+      "status": "success",
+      "elapsed_seconds": 20.27,
+      "timestamp": "2025-11-11T18:13:16.343917",
+      "details": {
+        "shares_outstanding": 24555000000,
+        "sec_filings": 25,
+        "analyst_reports": 20,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for PLTR",
+      "status": "running",
+      "elapsed_seconds": 20.27,
+      "timestamp": "2025-11-11T18:13:16.343917"
+    },
+    {
+      "step": "Classification for PLTR",
+      "status": "success",
+      "elapsed_seconds": 42.38,
+      "timestamp": "2025-11-11T18:13:38.456281",
+      "details": {
+        "classification": "growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting classification for NVDA",
+      "status": "running",
+      "elapsed_seconds": 42.38,
+      "timestamp": "2025-11-11T18:13:38.457530"
+    },
+    {
+      "step": "Classification for NVDA",
+      "status": "success",
+      "elapsed_seconds": 60.19,
+      "timestamp": "2025-11-11T18:13:56.264351",
+      "details": {
+        "classification": "hyper_growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting merger model analysis",
+      "status": "running",
+      "elapsed_seconds": 60.19,
+      "timestamp": "2025-11-11T18:13:56.265556"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 60.35,
+      "timestamp": "2025-11-11T18:13:56.429266",
+      "details": "Status 500: {\"error\":\"float division by zero\"}\n"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 60.35,
+      "timestamp": "2025-11-11T18:13:56.429266",
+      "details": "Status 500: {\"error\":\"float division by zero\"}\n"
+    }
+  ],
+  "errors": [
+    "Merger model: Status 500: {\"error\":\"float division by zero\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 500: {\"error\":\"float division by zero\"}\n"
+}

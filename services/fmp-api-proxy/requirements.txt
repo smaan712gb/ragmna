@@ -1,0 +1,13 @@
+# Flask and web framework
+flask==3.0.0
+gunicorn==21.2.0
+werkzeug==3.0.0
+
+# HTTP requests
+requests==2.31.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Type hints
+typing-extensions==4.8.0

@@ -1,0 +1,12 @@
+{
+  "tests_passed": 5,
+  "tests_failed": 1,
+  "details": {
+    "environment_check": "PASSED",
+    "gcp_key_check": "PASSED",
+    "fmp_api_check": "PASSED",
+    "gcp_auth_check": "PASSED",
+    "rag_engine_check": "FAILED - Status 401",
+    "conda_env_check": "PASSED"
+  }
+}

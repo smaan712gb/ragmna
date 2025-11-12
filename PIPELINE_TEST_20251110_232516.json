@@ -1,0 +1,26 @@
+{
+  "test_start": "2025-11-10T23:24:31.395919",
+  "symbol": "NVDA",
+  "phases": {
+    "data_ingestion": {
+      "status": "success",
+      "shares_outstanding": 24347000000,
+      "financial_statements": 5
+    },
+    "classification": {
+      "status": "success",
+      "primary_classification": null,
+      "growth_stage": null
+    },
+    "normalization": {
+      "status": "success",
+      "items_normalized": 0
+    },
+    "3sm": {
+      "status": "success",
+      "projection_years": 5,
+      "statements_generated": 3,
+      "balances": true
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "timestamp": "2025-11-11T18:21:47.845693",
+  "overall_status": "FAIL",
+  "tests_passed": 4,
+  "tests_failed": 4,
+  "warnings": 0,
+  "critical_issues": [
+    "Missing environment variable: GOOGLE_APPLICATION_CREDENTIALS",
+    "GCP credentials file not found",
+    "Classification failed with status 404",
+    "Merger model failed with status 404"
+  ],
+  "detailed_results": {
+    "environment": {
+      "status": "FAIL",
+      "missing": [
+        "GOOGLE_APPLICATION_CREDENTIALS"
+      ],
+      "present": [
+        "FMP_API_KEY",
+        "SERVICE_API_KEY",
+        "PROJECT_ID",
+        "VERTEX_PROJECT",
+        "VERTEX_LOCATION"
+      ],
+      "issues": []
+    },
+    "docker": {
+      "status": "PASS",
+      "running": [
+        "data-ingestion",
+        "llm-orchestrator",
+        "mergers-model",
+        "dd-agent"
+      ],
+      "not_running": [],
+      "issues": []
+    },
+    "health": {
+      "status": "PASS",
+      "healthy": [
+        "data-ingestion",
+        "llm-orchestrator",
+        "mergers-model",
+        "dd-agent"
+      ],
+      "unhealthy": [],
+      "unreachable": []
+    },
+    "api_keys": {
+      "status": "PASS",
+      "valid": [
+        "FMP_API_KEY",
+        "SERVICE_API_KEY"
+      ],
+      "invalid": [],
+      "issues": []
+    },
+    "gcp_auth": {
+      "status": "FAIL",
+      "issues": [
+        "GOOGLE_APPLICATION_CREDENTIALS file not found"
+      ]
+    },
+    "data_ingestion": {
+      "status": "PASS",
+      "test_symbol": "AAPL",
+      "shares_outstanding": 14948500000,
+      "issues": [],
+      "sec_filings": 26,
+      "analyst_reports": 20
+    },
+    "classification": {
+      "status": "FAIL",
+      "test_symbol": "AAPL",
+      "classification": null,
+      "issues": [
+        "HTTP 404"
+      ]
+    },
+    "merger_model": {
+      "status": "FAIL",
+      "test_target": "AAPL",
+      "test_acquirer": "MSFT",
+      "issues": [
+        "HTTP 404"
+      ]
+    }
+  }
+}

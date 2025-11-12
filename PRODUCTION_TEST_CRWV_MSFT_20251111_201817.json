@@ -1,0 +1,87 @@
+{
+  "test_timestamp": "2025-11-11T20:03:40.981482",
+  "target": "CRWV",
+  "acquirer": "MSFT",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T20:03:40.991178"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T20:03:41.009223"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T20:03:41.013141"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.06,
+      "timestamp": "2025-11-11T20:03:41.039317"
+    },
+    {
+      "step": "Starting data ingestion for CRWV",
+      "status": "running",
+      "elapsed_seconds": 0.06,
+      "timestamp": "2025-11-11T20:03:41.040617"
+    },
+    {
+      "step": "Data ingestion for CRWV",
+      "status": "success",
+      "elapsed_seconds": 498.45,
+      "timestamp": "2025-11-11T20:11:59.430194",
+      "details": {
+        "shares_outstanding": 404407000,
+        "sec_filings": 20,
+        "analyst_reports": 6,
+        "news": 108,
+        "vectors_stored": 181
+      }
+    },
+    {
+      "step": "Starting data ingestion for MSFT",
+      "status": "running",
+      "elapsed_seconds": 498.45,
+      "timestamp": "2025-11-11T20:11:59.432205"
+    },
+    {
+      "step": "Data ingestion for MSFT",
+      "status": "success",
+      "elapsed_seconds": 696.89,
+      "timestamp": "2025-11-11T20:15:17.869460",
+      "details": {
+        "shares_outstanding": 7433000000,
+        "sec_filings": 24,
+        "analyst_reports": 20,
+        "news": 146,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for CRWV",
+      "status": "running",
+      "elapsed_seconds": 696.9,
+      "timestamp": "2025-11-11T20:15:17.883727"
+    },
+    {
+      "step": "Classification for CRWV",
+      "status": "error",
+      "elapsed_seconds": 876.91,
+      "timestamp": "2025-11-11T20:18:17.894595",
+      "details": "HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=180)"
+    }
+  ],
+  "errors": [
+    "Classification CRWV: HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=180)"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "HTTPConnectionPool(host='localhost', port=8002): Read timed out. (read timeout=180)"
+}

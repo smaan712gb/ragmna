@@ -1,0 +1,62 @@
+{
+  "test_start": "2025-11-10T21:10:09.443371",
+  "confirmations": {
+    "nvda_profile": {
+      "status": "success",
+      "company": "NVIDIA Corporation",
+      "market_cap": 4846270350000,
+      "price": 199.05
+    },
+    "nvda_financials": {
+      "status": "success",
+      "statements_count": 5,
+      "latest_revenue": 130497000000
+    },
+    "msft_profile": {
+      "status": "success",
+      "company": "Microsoft Corporation",
+      "market_cap": 3761102953740
+    },
+    "peers": {
+      "status": "success",
+      "count": 9,
+      "peers_list": [
+        "AAPL",
+        "MSFT",
+        "TSM",
+        "AVGO",
+        "GOOGL",
+        "ADI",
+        "IMOS",
+        "TER",
+        "ENTG"
+      ]
+    },
+    "nvda_classification": {
+      "classification": "hyper_growth",
+      "growth_rate": 1.3651814092953525
+    },
+    "msft_classification": {
+      "classification": "stable"
+    },
+    "dcf_valuation": {
+      "status": "complete",
+      "enterprise_value": 800838951251.5348,
+      "value_per_share": 800838951251.5348,
+      "premium": 4023305456.179275
+    },
+    "lbo_analysis": {
+      "status": "complete",
+      "purchase_price": 6300151455000.0,
+      "irr": 0.22
+    },
+    "mergers_model": {
+      "status": "complete",
+      "total_synergies": 8000000000,
+      "eps_accretion": 0.391304347826087,
+      "is_accretive": true
+    }
+  },
+  "test_end": "2025-11-10T21:10:10.141857",
+  "test_status": "COMPLETE"
+}

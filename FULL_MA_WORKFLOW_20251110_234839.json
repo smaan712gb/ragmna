@@ -1,0 +1,28 @@
+{
+  "test_start": "2025-11-10T23:47:54.447632",
+  "target_symbol": "NVDA",
+  "acquirer_symbol": "MSFT",
+  "phases": {
+    "data_ingestion": {
+      "status": "success"
+    },
+    "classification": {
+      "status": "success"
+    },
+    "3sm": {
+      "status": "success"
+    },
+    "dcf": {
+      "status": "failed"
+    },
+    "cca": {
+      "status": "failed"
+    },
+    "lbo": {
+      "status": "failed"
+    },
+    "mergers": {
+      "status": "failed"
+    }
+  }
+}

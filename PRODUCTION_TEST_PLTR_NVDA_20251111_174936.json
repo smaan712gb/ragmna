@@ -1,0 +1,94 @@
+{
+  "test_timestamp": "2025-11-11T17:49:16.273908",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.02,
+      "timestamp": "2025-11-11T17:49:16.294432"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T17:49:16.299809"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.04,
+      "timestamp": "2025-11-11T17:49:16.317898"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.05,
+      "timestamp": "2025-11-11T17:49:16.320898"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.05,
+      "timestamp": "2025-11-11T17:49:16.320898"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "success",
+      "elapsed_seconds": 7.15,
+      "timestamp": "2025-11-11T17:49:23.425409",
+      "details": {
+        "shares_outstanding": 0,
+        "sec_filings": 20,
+        "analyst_reports": 8,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting data ingestion for NVDA",
+      "status": "running",
+      "elapsed_seconds": 7.15,
+      "timestamp": "2025-11-11T17:49:23.428164"
+    },
+    {
+      "step": "Data ingestion for NVDA",
+      "status": "success",
+      "elapsed_seconds": 14.09,
+      "timestamp": "2025-11-11T17:49:30.364990",
+      "details": {
+        "shares_outstanding": 0,
+        "sec_filings": 25,
+        "analyst_reports": 20,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for PLTR",
+      "status": "running",
+      "elapsed_seconds": 14.09,
+      "timestamp": "2025-11-11T17:49:30.364990"
+    },
+    {
+      "step": "Classification for PLTR",
+      "status": "error",
+      "elapsed_seconds": 20.5,
+      "timestamp": "2025-11-11T17:49:36.777113",
+      "details": "Status 500: {\"error\":\"Failed to retrieve RAG contexts: Authentication failed - check GCP credentials and IAM permissions: ('No access token in response.', {'id_token': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjRmZWI0NGYwZjdhN2UyN2M3YzQwMzM3OWFmZjIwYWY1YzhjZjUyZGMiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2Nsb3VkLXBsYXRmb3JtLGh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvYWlwbGF0Zm9ybSIsImF6cCI6InJhZy1zZXJ2aWNlLWFjY291bnRAYW1hZGRzMTAyMDI1LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJyYWctc2VydmljZS1hY2NvdW50QGFtYWRkczEwMjAyNS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NjI5MDQ5NzYsImlhdCI6MTc2MjkwMTM3NiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwic3ViIjoiMTAzMjQ0MTgzOTgzMzc3ODQzNjY4In0.HUGMl4lN2q8F5bOxldIM-IBXlbQZDel481oyvDDGITK7UDPIMkfXHGF_MrzW8-9G7h1kJJkbSrP30icCUbTSla1qC74WPE6cZwC9xh9S1rybtGgUpN4vuZ8fJhxSRj5qqgZ5nnao4elQ6CUvmEXtJX_JxE3lHYoqr7-dsbLSK5BlAEqk4YlwKWooNn8x41KsB_gZhoSGEZhYgBEZQmJnQi3lvlN3IUFu8zU-X4S1beO0lYW-Ta6Fq9mcZF7ptxjXOl_4NfzP9xEz4yfNrWWroX13vClxYZNb9sM9Ug_KIT0Y6g-trcQLF-LLAdMbfG8l1P-oP5spMkDOk0CS5TPiag'})\"}\n"
+    },
+    {
+      "step": "Classification for PLTR",
+      "status": "error",
+      "elapsed_seconds": 20.5,
+      "timestamp": "2025-11-11T17:49:36.777113",
+      "details": "Status 500: {\"error\":\"Failed to retrieve RAG contexts: Authentication failed - check GCP credentials and IAM permissions: ('No access token in response.', {'id_token': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjRmZWI0NGYwZjdhN2UyN2M3YzQwMzM3OWFmZjIwYWY1YzhjZjUyZGMiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2Nsb3VkLXBsYXRmb3JtLGh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvYWlwbGF0Zm9ybSIsImF6cCI6InJhZy1zZXJ2aWNlLWFjY291bnRAYW1hZGRzMTAyMDI1LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJyYWctc2VydmljZS1hY2NvdW50QGFtYWRkczEwMjAyNS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NjI5MDQ5NzYsImlhdCI6MTc2MjkwMTM3NiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwic3ViIjoiMTAzMjQ0MTgzOTgzMzc3ODQzNjY4In0.HUGMl4lN2q8F5bOxldIM-IBXlbQZDel481oyvDDGITK7UDPIMkfXHGF_MrzW8-9G7h1kJJkbSrP30icCUbTSla1qC74WPE6cZwC9xh9S1rybtGgUpN4vuZ8fJhxSRj5qqgZ5nnao4elQ6CUvmEXtJX_JxE3lHYoqr7-dsbLSK5BlAEqk4YlwKWooNn8x41KsB_gZhoSGEZhYgBEZQmJnQi3lvlN3IUFu8zU-X4S1beO0lYW-Ta6Fq9mcZF7ptxjXOl_4NfzP9xEz4yfNrWWroX13vClxYZNb9sM9Ug_KIT0Y6g-trcQLF-LLAdMbfG8l1P-oP5spMkDOk0CS5TPiag'})\"}\n"
+    }
+  ],
+  "errors": [
+    "Classification PLTR: Status 500: {\"error\":\"Failed to retrieve RAG contexts: Authentication failed - check GCP credentials and IAM permissions: ('No access token in response.', {'id_token': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjRmZWI0NGYwZjdhN2UyN2M3YzQwMzM3OWFmZjIwYWY1YzhjZjUyZGMiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2Nsb3VkLXBsYXRmb3JtLGh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvYWlwbGF0Zm9ybSIsImF6cCI6InJhZy1zZXJ2aWNlLWFjY291bnRAYW1hZGRzMTAyMDI1LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJyYWctc2VydmljZS1hY2NvdW50QGFtYWRkczEwMjAyNS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NjI5MDQ5NzYsImlhdCI6MTc2MjkwMTM3NiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwic3ViIjoiMTAzMjQ0MTgzOTgzMzc3ODQzNjY4In0.HUGMl4lN2q8F5bOxldIM-IBXlbQZDel481oyvDDGITK7UDPIMkfXHGF_MrzW8-9G7h1kJJkbSrP30icCUbTSla1qC74WPE6cZwC9xh9S1rybtGgUpN4vuZ8fJhxSRj5qqgZ5nnao4elQ6CUvmEXtJX_JxE3lHYoqr7-dsbLSK5BlAEqk4YlwKWooNn8x41KsB_gZhoSGEZhYgBEZQmJnQi3lvlN3IUFu8zU-X4S1beO0lYW-Ta6Fq9mcZF7ptxjXOl_4NfzP9xEz4yfNrWWroX13vClxYZNb9sM9Ug_KIT0Y6g-trcQLF-LLAdMbfG8l1P-oP5spMkDOk0CS5TPiag'})\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 500: {\"error\":\"Failed to retrieve RAG contexts: Authentication failed - check GCP credentials and IAM permissions: ('No access token in response.', {'id_token': 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjRmZWI0NGYwZjdhN2UyN2M3YzQwMzM3OWFmZjIwYWY1YzhjZjUyZGMiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9hdXRoL2Nsb3VkLXBsYXRmb3JtLGh0dHBzOi8vd3d3Lmdvb2dsZWFwaXMuY29tL2F1dGgvYWlwbGF0Zm9ybSIsImF6cCI6InJhZy1zZXJ2aWNlLWFjY291bnRAYW1hZGRzMTAyMDI1LmlhbS5nc2VydmljZWFjY291bnQuY29tIiwiZW1haWwiOiJyYWctc2VydmljZS1hY2NvdW50QGFtYWRkczEwMjAyNS5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJleHAiOjE3NjI5MDQ5NzYsImlhdCI6MTc2MjkwMTM3NiwiaXNzIjoiaHR0cHM6Ly9hY2NvdW50cy5nb29nbGUuY29tIiwic3ViIjoiMTAzMjQ0MTgzOTgzMzc3ODQzNjY4In0.HUGMl4lN2q8F5bOxldIM-IBXlbQZDel481oyvDDGITK7UDPIMkfXHGF_MrzW8-9G7h1kJJkbSrP30icCUbTSla1qC74WPE6cZwC9xh9S1rybtGgUpN4vuZ8fJhxSRj5qqgZ5nnao4elQ6CUvmEXtJX_JxE3lHYoqr7-dsbLSK5BlAEqk4YlwKWooNn8x41KsB_gZhoSGEZhYgBEZQmJnQi3lvlN3IUFu8zU-X4S1beO0lYW-Ta6Fq9mcZF7ptxjXOl_4NfzP9xEz4yfNrWWroX13vClxYZNb9sM9Ug_KIT0Y6g-trcQLF-LLAdMbfG8l1P-oP5spMkDOk0CS5TPiag'})\"}\n"
+}

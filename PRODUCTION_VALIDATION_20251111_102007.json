@@ -1,0 +1,68 @@
+{
+  "start_time": "2025-11-11T10:19:10.524190",
+  "test_name": "MSFT_NVDA_Production_Validation",
+  "services_status": {
+    "data-ingestion": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8001): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F890D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "llm-orchestrator": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8002): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8B550>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "financial-normalizer": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8003): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8D7D0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "three-statement-modeler": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8004): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8AFD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "dcf-valuation": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8005): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F89110>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "cca-valuation": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8006): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8D690>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "lbo-analysis": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8007): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186FA0290>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "mergers-model": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8008): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186FA2550>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "precedent-transactions": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8009): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186FA8810>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "dd-agent": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8010): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186FA0F90>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "board-reporting": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8011): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F6D750>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "excel-exporter": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8012): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8CE50>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "run-manager": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8013): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186F8ABD0>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    },
+    "qa-engine": {
+      "status": "unreachable",
+      "error": "HTTPConnectionPool(host='localhost', port=8014): Max retries exceeded with url: /health (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0x0000025186FA9550>: Failed to establish a new connection: [WinError 10061] No connection could be made because the target machine actively refused it'))"
+    }
+  },
+  "workflow_phases": {},
+  "reports_generated": {},
+  "validation_errors": [],
+  "overall_status": "FAILED",
+  "failure_reason": "One or more services are unhealthy",
+  "end_time": "2025-11-11T10:20:07.316182"
+}

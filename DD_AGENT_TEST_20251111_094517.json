@@ -1,0 +1,34 @@
+{
+  "test_suite": "DD Agent Comprehensive Test",
+  "timestamp": "2025-11-11T09:45:17.770624",
+  "symbol": "NVDA",
+  "tests": {
+    "health_check": {
+      "status": "passed"
+    },
+    "comprehensive_dd": {
+      "status": "failed",
+      "result": null
+    },
+    "legal_risk": {
+      "status": "failed",
+      "result": null
+    },
+    "financial_risk": {
+      "status": "failed",
+      "result": null
+    },
+    "operational_risk": {
+      "status": "failed",
+      "result": null
+    },
+    "strategic_risk": {
+      "status": "failed",
+      "result": null
+    },
+    "reputational_risk": {
+      "status": "failed",
+      "result": null
+    }
+  }
+}

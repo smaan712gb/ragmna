@@ -1,0 +1,27 @@
+{
+  "test_id": "20251111_193808",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "peers": [
+    "SNOW",
+    "DDOG"
+  ],
+  "start_time": "2025-11-11T19:38:08.286528",
+  "steps": {
+    "target_ingestion": null,
+    "acquirer_ingestion": null,
+    "peer_ingestion_SNOW": null,
+    "peer_ingestion_DDOG": null,
+    "target_classification": null,
+    "target_normalization": null,
+    "three_statement_model": null,
+    "dcf_valuation": null,
+    "cca_valuation": null,
+    "lbo_analysis": null,
+    "merger_model": null,
+    "due_diligence": null,
+    "board_report": null
+  },
+  "end_time": "2025-11-11T19:38:16.425496",
+  "elapsed_time_seconds": 8.138967990875244
+}

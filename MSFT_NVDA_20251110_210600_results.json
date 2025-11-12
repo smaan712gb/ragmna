@@ -1,0 +1,19 @@
+{
+  "test_name": "MSFT_NVDA_20251110_210600",
+  "acquirer": "MSFT",
+  "target": "NVDA",
+  "timestamp": "2025-11-10T21:06:00.768212",
+  "confirmations": {
+    "services_imported": true
+  },
+  "target_data": {
+    "status": "success",
+    "company": "NVIDIA Corporation",
+    "statements_fetched": 0,
+    "documents_vectorized": 0
+  },
+  "acquirer_data": {
+    "status": "success",
+    "company": "Microsoft Corporation"
+  }
+}

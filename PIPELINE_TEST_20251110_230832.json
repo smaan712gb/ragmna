@@ -1,0 +1,24 @@
+{
+  "test_start": "2025-11-10T23:03:14.519665",
+  "symbol": "NVDA",
+  "phases": {
+    "data_ingestion": {
+      "status": "success",
+      "shares_outstanding": 24347000000,
+      "financial_statements": 5
+    },
+    "classification": {
+      "status": "success",
+      "primary_classification": null,
+      "growth_stage": null
+    },
+    "normalization": {
+      "status": "fallback",
+      "error": "Object of type Timestamp is not JSON serializable"
+    },
+    "3sm": {
+      "status": "failed",
+      "error": "No income statement data available"
+    }
+  }
+}

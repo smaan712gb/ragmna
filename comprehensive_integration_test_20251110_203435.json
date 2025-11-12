@@ -1,0 +1,72 @@
+{
+  "test_config": {
+    "acquirer": "MSFT",
+    "target": "HOOD",
+    "as_of_date": "2025-11-10",
+    "test_name": "COMPREHENSIVE_INTEGRATION_TEST"
+  },
+  "phases": {
+    "phase_0": {
+      "phase": "Setup & Config",
+      "status": "partial",
+      "components": [
+        {
+          "name": "Run Manager",
+          "status": "code_exists",
+          "note": "Service needs to be started for live test"
+        }
+      ]
+    },
+    "phase_1_2": {
+      "phase": "Data Ingestion & RAG",
+      "status": "success",
+      "components": [
+        {
+          "name": "Data Ingestion",
+          "status": "error",
+          "error": "'ComprehensiveIntegrationTest' object has no attribute 'data_ingestion'"
+        }
+      ]
+    },
+    "phase_4": {
+      "phase": "Normalization",
+      "status": "code_ready",
+      "components": []
+    },
+    "phase_7": {
+      "phase": "QA & Validation",
+      "status": "code_ready",
+      "components": [
+        {
+          "name": "QA Engine",
+          "status": "code_ready",
+          "note": "Will validate all calculations when deployed"
+        }
+      ]
+    },
+    "phase_8": {
+      "phase": "Board Reporting",
+      "status": "code_ready",
+      "components": [
+        {
+          "name": "Board Reporting",
+          "status": "code_ready",
+          "deliverables": [
+            "Excel",
+            "PowerPoint",
+            "Executive Summary"
+          ]
+        }
+      ]
+    }
+  },
+  "started_at": "2025-11-10T20:34:30.653735",
+  "errors": [
+    "Data ingestion failed: 'ComprehensiveIntegrationTest' object has no attribute 'data_ingestion'"
+  ],
+  "warnings": [
+    "VERTEX_PROJECT not set",
+    "VERTEX_LOCATION not set"
+  ],
+  "completed_at": "2025-11-10T20:34:35.006247"
+}

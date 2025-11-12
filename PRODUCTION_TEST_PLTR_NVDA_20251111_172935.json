@@ -1,0 +1,49 @@
+{
+  "test_timestamp": "2025-11-11T17:29:33.925073",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T17:29:33.931761"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T17:29:33.936832"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T17:29:33.959246"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.04,
+      "timestamp": "2025-11-11T17:29:33.962394"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.04,
+      "timestamp": "2025-11-11T17:29:33.962900"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "error",
+      "elapsed_seconds": 1.15,
+      "timestamp": "2025-11-11T17:29:35.073226",
+      "details": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+    }
+  ],
+  "errors": [
+    "Data ingestion PLTR: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))"
+}

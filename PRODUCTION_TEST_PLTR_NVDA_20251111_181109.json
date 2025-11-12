@@ -1,0 +1,126 @@
+{
+  "test_timestamp": "2025-11-11T18:10:07.872632",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 4.5,
+      "timestamp": "2025-11-11T18:10:12.374392"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 4.51,
+      "timestamp": "2025-11-11T18:10:12.387376"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 4.52,
+      "timestamp": "2025-11-11T18:10:12.390972"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 4.53,
+      "timestamp": "2025-11-11T18:10:12.407318"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 4.54,
+      "timestamp": "2025-11-11T18:10:12.407836"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "success",
+      "elapsed_seconds": 13.31,
+      "timestamp": "2025-11-11T18:10:21.178555",
+      "details": {
+        "shares_outstanding": 0,
+        "sec_filings": 20,
+        "analyst_reports": 8,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting data ingestion for NVDA",
+      "status": "running",
+      "elapsed_seconds": 13.31,
+      "timestamp": "2025-11-11T18:10:21.178555"
+    },
+    {
+      "step": "Data ingestion for NVDA",
+      "status": "success",
+      "elapsed_seconds": 21.78,
+      "timestamp": "2025-11-11T18:10:29.651490",
+      "details": {
+        "shares_outstanding": 0,
+        "sec_filings": 25,
+        "analyst_reports": 20,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for PLTR",
+      "status": "running",
+      "elapsed_seconds": 21.78,
+      "timestamp": "2025-11-11T18:10:29.654174"
+    },
+    {
+      "step": "Classification for PLTR",
+      "status": "success",
+      "elapsed_seconds": 43.28,
+      "timestamp": "2025-11-11T18:10:51.153282",
+      "details": {
+        "classification": "growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting classification for NVDA",
+      "status": "running",
+      "elapsed_seconds": 43.28,
+      "timestamp": "2025-11-11T18:10:51.154199"
+    },
+    {
+      "step": "Classification for NVDA",
+      "status": "success",
+      "elapsed_seconds": 61.89,
+      "timestamp": "2025-11-11T18:11:09.765736",
+      "details": {
+        "classification": "hyper_growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting merger model analysis",
+      "status": "running",
+      "elapsed_seconds": 61.89,
+      "timestamp": "2025-11-11T18:11:09.766540"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 62.07,
+      "timestamp": "2025-11-11T18:11:09.940895",
+      "details": "Status 500: {\"error\":\"\\u274c CRITICAL: Shares outstanding = 0 for PLTR. Cannot proceed with merger model. Check data ingestion from yfinance/FMP.\"}\n"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 62.07,
+      "timestamp": "2025-11-11T18:11:09.940895",
+      "details": "Status 500: {\"error\":\"\\u274c CRITICAL: Shares outstanding = 0 for PLTR. Cannot proceed with merger model. Check data ingestion from yfinance/FMP.\"}\n"
+    }
+  ],
+  "errors": [
+    "Merger model: Status 500: {\"error\":\"\\u274c CRITICAL: Shares outstanding = 0 for PLTR. Cannot proceed with merger model. Check data ingestion from yfinance/FMP.\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 500: {\"error\":\"\\u274c CRITICAL: Shares outstanding = 0 for PLTR. Cannot proceed with merger model. Check data ingestion from yfinance/FMP.\"}\n"
+}

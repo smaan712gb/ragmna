@@ -1,0 +1,366 @@
+{
+  "test_suite": "DD Agent Production Test",
+  "timestamp": "2025-11-11T09:20:38.261972",
+  "symbol": "NVDA",
+  "tests": {
+    "health_check": {
+      "status": "passed"
+    },
+    "comprehensive_dd": {
+      "status": "passed",
+      "result": {
+        "company_symbol": "NVDA",
+        "comprehensive_dd_completed": true,
+        "document_insights": {
+          "documents_analyzed": 3,
+          "key_insights": [
+            "10-K: Annual report discussing GPU business, AI datacenter growth, litigation matters, and regulatory comp...",
+            "10-Q: Quarterly report with revenue recognition policies, off-balance sheet arrangements, and related part...",
+            "8-K: Current report on earnings announcement and forward-looking statements...."
+          ],
+          "rag_analysis_complete": true,
+          "recommendations": [
+            "Review all SEC filings thoroughly",
+            "Analyze footnotes for off-balance sheet items",
+            "Verify management discussion and analysis"
+          ],
+          "risk_indicators": []
+        },
+        "financial_analysis": {
+          "financial_quality": {
+            "severity_score": 3
+          },
+          "financial_risk_level": "high",
+          "model_insights": {
+            "insights": [],
+            "red_flags": []
+          },
+          "off_balance_sheet_risks": {
+            "severity_score": 1
+          },
+          "overall_financial_score": 3,
+          "rag_insights": [
+            "Revenue trend analysis: 3 periods analyzed",
+            "Financial statement quality: Volatile"
+          ],
+          "related_party_risks": {
+            "severity_score": 2
+          },
+          "revenue_recognition_risks": {
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "financial_statements",
+            "rag_vectors",
+            "financial_models"
+          ]
+        },
+        "financial_model_analysis": {
+          "insights": [
+            "Financial models unavailable - using company data only"
+          ],
+          "red_flags": [],
+          "valuation_concerns": []
+        },
+        "generated_at": "2025-11-11T09:21:02.624266",
+        "legal_analysis": {
+          "employment_risks": {
+            "severity_score": 1
+          },
+          "ip_risks": {
+            "severity_score": 2
+          },
+          "key_concerns": [],
+          "legal_risk_level": "high",
+          "litigation_risks": {
+            "litigation_count": 1,
+            "severity_score": 3,
+            "total_filings": 3
+          },
+          "overall_legal_score": 3,
+          "rag_insights": [
+            "Filing 10-K: Annual report discussing GPU business, AI datacenter growth, litigation matters, and regulatory comp...",
+            "Filing 10-Q: Quarterly report with revenue recognition policies, off-balance sheet arrangements, and related part..."
+          ],
+          "regulatory_risks": {
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "sec_filings",
+            "rag_vectors"
+          ]
+        },
+        "operational_analysis": {
+          "efficiency_risks": {
+            "severity_score": 2
+          },
+          "operational_risk_level": "high",
+          "overall_operational_score": 3,
+          "personnel_risks": {
+            "severity_score": 2
+          },
+          "rag_insights": [
+            "Industry analysis: semiconductors",
+            "Operational risk profile: high",
+            "Supply chain considerations analyzed"
+          ],
+          "supply_chain_risks": {
+            "severity_score": 3
+          },
+          "technology_risks": {
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "company_data",
+            "rag_vectors"
+          ]
+        },
+        "overall_assessment": {
+          "overall_risk_level": "moderate",
+          "overall_score": 2.2,
+          "risk_distribution": {
+            "high_risk_categories": [
+              "legal",
+              "financial",
+              "operational"
+            ],
+            "low_risk_categories": [
+              "strategic",
+              "reputational"
+            ],
+            "moderate_risk_categories": [],
+            "risk_concentration": "high"
+          }
+        },
+        "production_ready": true,
+        "recommendations": [
+          "Conduct comprehensive legal due diligence review",
+          "Perform detailed financial audit",
+          "Establish risk mitigation strategies",
+          "Define post-acquisition integration plan",
+          "Monitor key risk indicators post-close"
+        ],
+        "reputational_analysis": {
+          "brand_perception": {
+            "severity_score": 1
+          },
+          "esg_compliance": {
+            "severity_score": 2
+          },
+          "executive_compensation": {
+            "severity_score": 2
+          },
+          "overall_reputational_score": 1,
+          "rag_insights": [
+            "News sentiment: 0.15",
+            "Reputational risk: low",
+            "ESG considerations evaluated"
+          ],
+          "reputational_risk_level": "low",
+          "social_sentiment": {
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "news_data",
+            "rag_vectors"
+          ]
+        },
+        "service_availability": {
+          "cca_valuation": false,
+          "data_ingestion": false,
+          "dcf_valuation": false,
+          "lbo_analysis": false,
+          "three_statement_modeler": false
+        },
+        "strategic_analysis": {
+          "competitive_risks": {
+            "severity_score": 2
+          },
+          "customer_concentration": {
+            "severity_score": 2
+          },
+          "industry_trends": {
+            "severity_score": 2
+          },
+          "market_position": {
+            "severity_score": 1
+          },
+          "overall_strategic_score": 1,
+          "rag_insights": [
+            "Market capitalization: $3000.0B",
+            "Strategic risk assessment: low",
+            "Competitive landscape analyzed"
+          ],
+          "strategic_risk_level": "low",
+          "vector_sources_used": [
+            "market_data",
+            "rag_vectors"
+          ]
+        },
+        "vector_sources": {
+          "financial_models_available": false,
+          "ingestion_vectors_available": false,
+          "rag_vectors_by_category": {
+            "financial": true,
+            "legal": true,
+            "operational": true,
+            "reputational": true,
+            "strategic": true
+          },
+          "sources_integrated": [
+            null,
+            null,
+            "rag_vectors"
+          ],
+          "total_rag_contexts": 5
+        }
+      }
+    },
+    "legal_risk": {
+      "status": "passed",
+      "result": {
+        "employment_risks": {
+          "severity_score": 1
+        },
+        "ip_risks": {
+          "severity_score": 2
+        },
+        "key_concerns": [],
+        "legal_risk_level": "high",
+        "litigation_risks": {
+          "litigation_count": 1,
+          "severity_score": 3,
+          "total_filings": 3
+        },
+        "overall_legal_score": 3,
+        "rag_insights": [
+          "Filing 10-K: Annual report discussing GPU business, AI datacenter growth, litigation matters, and regulatory comp...",
+          "Filing 10-Q: Quarterly report with revenue recognition policies, off-balance sheet arrangements, and related part..."
+        ],
+        "regulatory_risks": {
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "sec_filings",
+          "rag_vectors"
+        ]
+      }
+    },
+    "financial_risk": {
+      "status": "passed",
+      "result": {
+        "financial_quality": {
+          "severity_score": 3
+        },
+        "financial_risk_level": "high",
+        "model_insights": {
+          "insights": [],
+          "red_flags": []
+        },
+        "off_balance_sheet_risks": {
+          "severity_score": 1
+        },
+        "overall_financial_score": 3,
+        "rag_insights": [
+          "Revenue trend analysis: 3 periods analyzed",
+          "Financial statement quality: Volatile"
+        ],
+        "related_party_risks": {
+          "severity_score": 2
+        },
+        "revenue_recognition_risks": {
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "financial_statements",
+          "rag_vectors",
+          "financial_models"
+        ]
+      }
+    },
+    "operational_risk": {
+      "status": "passed",
+      "result": {
+        "efficiency_risks": {
+          "severity_score": 2
+        },
+        "operational_risk_level": "high",
+        "overall_operational_score": 3,
+        "personnel_risks": {
+          "severity_score": 2
+        },
+        "rag_insights": [
+          "Industry analysis: semiconductors",
+          "Operational risk profile: high",
+          "Supply chain considerations analyzed"
+        ],
+        "supply_chain_risks": {
+          "severity_score": 3
+        },
+        "technology_risks": {
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "company_data",
+          "rag_vectors"
+        ]
+      }
+    },
+    "strategic_risk": {
+      "status": "passed",
+      "result": {
+        "competitive_risks": {
+          "severity_score": 2
+        },
+        "customer_concentration": {
+          "severity_score": 2
+        },
+        "industry_trends": {
+          "severity_score": 2
+        },
+        "market_position": {
+          "severity_score": 1
+        },
+        "overall_strategic_score": 1,
+        "rag_insights": [
+          "Market capitalization: $3000.0B",
+          "Strategic risk assessment: low",
+          "Competitive landscape analyzed"
+        ],
+        "strategic_risk_level": "low",
+        "vector_sources_used": [
+          "market_data",
+          "rag_vectors"
+        ]
+      }
+    },
+    "reputational_risk": {
+      "status": "passed",
+      "result": {
+        "brand_perception": {
+          "severity_score": 1
+        },
+        "esg_compliance": {
+          "severity_score": 2
+        },
+        "executive_compensation": {
+          "severity_score": 2
+        },
+        "overall_reputational_score": 1,
+        "rag_insights": [
+          "News sentiment: 0.15",
+          "Reputational risk: low",
+          "ESG considerations evaluated"
+        ],
+        "reputational_risk_level": "low",
+        "social_sentiment": {
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "news_data",
+          "rag_vectors"
+        ]
+      }
+    }
+  }
+}

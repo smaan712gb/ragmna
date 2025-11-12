@@ -1,0 +1,37 @@
+{
+  "symbol": "NVDA",
+  "test_start": "2025-11-10T21:45:05.338026",
+  "phases": {
+    "company_info": {
+      "status": "success",
+      "shares_outstanding": 24347000000,
+      "sources_used": [
+        "FMP",
+        "yfinance"
+      ]
+    },
+    "sec_filings": {
+      "status": "success",
+      "total_filings": 25,
+      "filing_types": {
+        "10-Q": 6,
+        "8-K": 17,
+        "10-K": 2
+      }
+    },
+    "analyst_reports": {
+      "status": "success",
+      "total_reports": 20
+    },
+    "news": {
+      "status": "success",
+      "total_items": 147
+    },
+    "vectorization": {
+      "status": "success",
+      "total_documents": 0,
+      "total_vectors": 0
+    }
+  },
+  "test_end": "2025-11-10T21:45:10.503949"
+}

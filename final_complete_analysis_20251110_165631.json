@@ -1,0 +1,131 @@
+{
+  "analysis_id": "HOOD_MS_20251110_165630",
+  "target_company": "HOOD",
+  "acquirer_company": "MS",
+  "analysis_timestamp": "2025-11-10T16:56:30.774930",
+  "pipeline_steps": [
+    {
+      "step": "system_health_check",
+      "status": "success",
+      "components_checked": 6,
+      "healthy_components": 6,
+      "timestamp": "2025-11-10T16:56:30.796529"
+    },
+    {
+      "step": "data_ingestion",
+      "status": "success",
+      "target_data_ingested": true,
+      "acquirer_data_ingested": true,
+      "data_sources": [
+        "sec_filings",
+        "analyst_reports",
+        "news",
+        "financials"
+      ],
+      "timestamp": "2025-11-10T16:56:31.488163"
+    },
+    {
+      "step": "company_classification",
+      "status": "success",
+      "target_classification": {
+        "growth_profile": "Fintech Innovator",
+        "business_model": "Platform/Marketplace",
+        "characteristics": "High-growth, mobile-first, zero-fee trading"
+      },
+      "acquirer_classification": {
+        "growth_profile": "Mature Financial Services",
+        "business_model": "Full-service Investment Banking",
+        "characteristics": "Institutional focus, wealth management, capital markets"
+      },
+      "method": "LLM-powered analysis",
+      "timestamp": "2025-11-10T16:56:31.498162"
+    },
+    {
+      "step": "peer_analysis",
+      "status": "success",
+      "target_company": "HOOD",
+      "peers_found": 5,
+      "peer_symbols": [
+        "SCHW",
+        "ETSY",
+        "SQ",
+        "COIN",
+        "PYPL"
+      ],
+      "selection_criteria": "Similar business models and market characteristics",
+      "timestamp": "2025-11-10T16:56:31.501163"
+    },
+    {
+      "step": "financial_modeling",
+      "status": "success",
+      "company": "HOOD",
+      "model_type": "three_statement",
+      "projections": "5-year detailed financials",
+      "key_assumptions": {
+        "revenue_growth": "25% YoY",
+        "gross_margin": "30%",
+        "model_type": "High-growth fintech platform"
+      },
+      "timestamp": "2025-11-10T16:56:31.502162"
+    },
+    {
+      "step": "valuation_analysis",
+      "status": "success",
+      "target_company": "HOOD",
+      "acquirer_company": "MS",
+      "valuation_methods": [
+        "dcf",
+        "cca",
+        "lbo"
+      ],
+      "valuation_ranges": {
+        "dcf": "$140B-$180B",
+        "cca": "$130B-$170B",
+        "lbo": "$120B-$150B"
+      },
+      "key_drivers": "Growth profile, competitive positioning, synergies",
+      "timestamp": "2025-11-10T16:56:31.504693"
+    },
+    {
+      "step": "due_diligence",
+      "status": "success",
+      "company": "HOOD",
+      "areas_covered": [
+        "financial_health",
+        "regulatory_compliance",
+        "technology_assessment",
+        "market_position",
+        "risk_assessment",
+        "customer_analysis"
+      ],
+      "findings": "Comprehensive analysis completed",
+      "risk_assessment": "Identified key risks and mitigation strategies",
+      "timestamp": "2025-11-10T16:56:31.511187"
+    },
+    {
+      "step": "final_report",
+      "status": "success",
+      "report_type": "comprehensive_ma_analysis",
+      "sections": [
+        "executive_summary",
+        "strategic_analysis",
+        "valuation",
+        "due_diligence",
+        "recommendations"
+      ],
+      "report_summary": {
+        "target_company": "HOOD",
+        "acquirer_company": "MS",
+        "analysis_date": "2025-11-10T16:56:30.774930",
+        "pipeline_completion": "0/0 steps completed",
+        "key_findings": "Strategic fit analysis, valuation ranges, due diligence summary",
+        "recommendations": "Proceed with detailed due diligence based on compelling synergies"
+      },
+      "timestamp": "2025-11-10T16:56:31.514758"
+    }
+  ],
+  "system_components": [],
+  "system_status": "completed",
+  "total_steps": 8,
+  "successful_steps": 8
+}

@@ -1,0 +1,126 @@
+{
+  "test_timestamp": "2025-11-11T18:34:17.255409",
+  "target": "PLTR",
+  "acquirer": "NVDA",
+  "steps": [
+    {
+      "step": "Health check: Data Ingestion",
+      "status": "success",
+      "elapsed_seconds": 0.01,
+      "timestamp": "2025-11-11T18:34:17.267263"
+    },
+    {
+      "step": "Health check: LLM Orchestrator",
+      "status": "success",
+      "elapsed_seconds": 0.02,
+      "timestamp": "2025-11-11T18:34:17.272271"
+    },
+    {
+      "step": "Health check: Merger Model",
+      "status": "success",
+      "elapsed_seconds": 0.02,
+      "timestamp": "2025-11-11T18:34:17.279782"
+    },
+    {
+      "step": "Health check: DD Agent",
+      "status": "success",
+      "elapsed_seconds": 0.02,
+      "timestamp": "2025-11-11T18:34:17.279782"
+    },
+    {
+      "step": "Starting data ingestion for PLTR",
+      "status": "running",
+      "elapsed_seconds": 0.03,
+      "timestamp": "2025-11-11T18:34:17.284125"
+    },
+    {
+      "step": "Data ingestion for PLTR",
+      "status": "success",
+      "elapsed_seconds": 7.19,
+      "timestamp": "2025-11-11T18:34:24.444827",
+      "details": {
+        "shares_outstanding": 2250163000,
+        "sec_filings": 20,
+        "analyst_reports": 8,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting data ingestion for NVDA",
+      "status": "running",
+      "elapsed_seconds": 7.19,
+      "timestamp": "2025-11-11T18:34:24.444827"
+    },
+    {
+      "step": "Data ingestion for NVDA",
+      "status": "success",
+      "elapsed_seconds": 14.69,
+      "timestamp": "2025-11-11T18:34:31.948304",
+      "details": {
+        "shares_outstanding": 24555000000,
+        "sec_filings": 25,
+        "analyst_reports": 20,
+        "news": 147,
+        "vectors_stored": 0
+      }
+    },
+    {
+      "step": "Starting classification for PLTR",
+      "status": "running",
+      "elapsed_seconds": 14.69,
+      "timestamp": "2025-11-11T18:34:31.948304"
+    },
+    {
+      "step": "Classification for PLTR",
+      "status": "success",
+      "elapsed_seconds": 43.17,
+      "timestamp": "2025-11-11T18:35:00.423867",
+      "details": {
+        "classification": "growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting classification for NVDA",
+      "status": "running",
+      "elapsed_seconds": 43.17,
+      "timestamp": "2025-11-11T18:35:00.424537"
+    },
+    {
+      "step": "Classification for NVDA",
+      "status": "success",
+      "elapsed_seconds": 62.89,
+      "timestamp": "2025-11-11T18:35:20.147708",
+      "details": {
+        "classification": "hyper_growth",
+        "industry": "technology"
+      }
+    },
+    {
+      "step": "Starting merger model analysis",
+      "status": "running",
+      "elapsed_seconds": 62.89,
+      "timestamp": "2025-11-11T18:35:20.148234"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 63.07,
+      "timestamp": "2025-11-11T18:35:20.328932",
+      "details": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+    },
+    {
+      "step": "Merger model analysis",
+      "status": "error",
+      "elapsed_seconds": 63.07,
+      "timestamp": "2025-11-11T18:35:20.329935",
+      "details": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+    }
+  ],
+  "errors": [
+    "Merger model: Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+  ],
+  "overall_status": "FAILED",
+  "failure_reason": "Status 500: {\"error\":\"\\u274c Acquirer EPS is zero - cannot calculate accretion/dilution. Check acquirer net income and shares outstanding.\"}\n"
+}

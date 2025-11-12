@@ -1,0 +1,398 @@
+{
+  "test_suite": "DD Agent Comprehensive Test",
+  "timestamp": "2025-11-11T09:12:24.406558",
+  "symbol": "NVDA",
+  "tests": {
+    "health_check": {
+      "status": "passed"
+    },
+    "comprehensive_dd": {
+      "status": "passed",
+      "result": {
+        "company_symbol": "NVDA",
+        "comprehensive_dd_completed": true,
+        "document_insights": {
+          "documents_analyzed": 0,
+          "key_insights": [],
+          "rag_analysis_complete": true,
+          "recommendations": [],
+          "risk_indicators": []
+        },
+        "due_diligence_summary": {
+          "deal_impact": "low_impact",
+          "overall_risk_level": "unknown",
+          "recommendation": "proceed",
+          "summary_text": "Low risk profile identified, favorable for transaction completion."
+        },
+        "financial_analysis": {
+          "financial_quality": {
+            "earnings_volatility": 0.7468749472330157,
+            "revenue_volatility": 0.418536752993947,
+            "severity_level": "high",
+            "severity_score": 3
+          },
+          "financial_risk_level": "moderate",
+          "model_insights": {
+            "insights": [],
+            "red_flags": [],
+            "valuation_concerns": []
+          },
+          "off_balance_sheet_risks": {
+            "debt_to_assets_ratio": 0.4281432570593963,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "overall_financial_score": 2.0,
+          "rag_insights": [],
+          "related_party_risks": {
+            "risk_factors": [],
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "revenue_recognition_risks": {
+            "complexity_factors": [],
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "financial_statements",
+            "rag_vectors",
+            "financial_models"
+          ]
+        },
+        "financial_model_analysis": {
+          "insights": [],
+          "red_flags": [],
+          "valuation_concerns": []
+        },
+        "generated_at": "2025-11-11T09:12:32.583907",
+        "legal_analysis": {
+          "employment_risks": {
+            "employment_mentions": 0,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "ip_risks": {
+            "ip_risk_level": "high",
+            "key_concerns": [
+              "High IP concentration risk",
+              "Potential patent litigation exposure"
+            ],
+            "severity_score": 3
+          },
+          "key_concerns": [
+            "High risk: "
+          ],
+          "legal_risk_level": "moderate",
+          "litigation_risks": {
+            "litigation_mentions": 1,
+            "litigation_ratio": 0.3333333333333333,
+            "severity_level": "high",
+            "severity_score": 3,
+            "significant_cases": [
+              "10-K"
+            ],
+            "total_filings_analyzed": 3
+          },
+          "overall_legal_score": 2.0,
+          "rag_insights": [],
+          "regulatory_risks": {
+            "regulatory_mentions": 1,
+            "sec_investigations": 0,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "vector_sources_used": [
+            "sec_filings",
+            "rag_vectors"
+          ]
+        },
+        "operational_analysis": {
+          "efficiency_risks": {
+            "margin_trend": 0.32655976952390386,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "operational_risk_level": "moderate",
+          "overall_operational_score": 2.25,
+          "personnel_risks": {
+            "executive_count": 4,
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "rag_insights": [],
+          "supply_chain_risks": {
+            "risk_factors": [
+              "Global supply chain dependencies",
+              "Geopolitical risks"
+            ],
+            "severity_level": "high",
+            "severity_score": 3
+          },
+          "technology_risks": {
+            "severity_level": "high",
+            "severity_score": 3
+          },
+          "vector_sources_used": [
+            "company_data",
+            "rag_vectors"
+          ]
+        },
+        "overall_assessment": {
+          "overall_risk_level": "unknown",
+          "overall_score": 2.0
+        },
+        "recommendations": [
+          "Establish clear risk mitigation strategies",
+          "Define post-acquisition integration plan"
+        ],
+        "reputational_analysis": {
+          "brand_perception": {
+            "sentiment_score": 0.15,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "esg_compliance": {
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "executive_compensation": {
+            "executive_count": 4,
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "overall_reputational_score": 1.75,
+          "rag_insights": [],
+          "reputational_risk_level": "moderate",
+          "social_sentiment": {
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "vector_sources_used": [
+            "news_data",
+            "rag_vectors"
+          ]
+        },
+        "strategic_analysis": {
+          "competitive_risks": {
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "customer_concentration": {
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "industry_trends": {
+            "severity_level": "moderate",
+            "severity_score": 2
+          },
+          "market_position": {
+            "market_cap": 3000000000000,
+            "severity_level": "low",
+            "severity_score": 1
+          },
+          "overall_strategic_score": 1.75,
+          "rag_insights": [],
+          "strategic_risk_level": "moderate",
+          "vector_sources_used": [
+            "market_data",
+            "rag_vectors"
+          ]
+        },
+        "vector_sources": {
+          "financial_models_available": false,
+          "ingestion_vectors_available": false,
+          "rag_vectors_by_category": {
+            "financial": false,
+            "legal": false,
+            "operational": false,
+            "reputational": false,
+            "strategic": false
+          },
+          "sources_integrated": [
+            null,
+            null,
+            null
+          ],
+          "total_rag_contexts": 0
+        }
+      }
+    },
+    "legal_risk": {
+      "status": "passed",
+      "result": {
+        "employment_risks": {
+          "employment_mentions": 0,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "ip_risks": {
+          "ip_risk_level": "high",
+          "key_concerns": [
+            "High IP concentration risk",
+            "Potential patent litigation exposure"
+          ],
+          "severity_score": 3
+        },
+        "key_concerns": [
+          "High risk: "
+        ],
+        "legal_risk_level": "moderate",
+        "litigation_risks": {
+          "litigation_mentions": 1,
+          "litigation_ratio": 0.3333333333333333,
+          "severity_level": "high",
+          "severity_score": 3,
+          "significant_cases": [
+            "10-K"
+          ],
+          "total_filings_analyzed": 3
+        },
+        "overall_legal_score": 2.0,
+        "rag_insights": [],
+        "regulatory_risks": {
+          "regulatory_mentions": 1,
+          "sec_investigations": 0,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "vector_sources_used": [
+          "sec_filings",
+          "rag_vectors"
+        ]
+      }
+    },
+    "financial_risk": {
+      "status": "passed",
+      "result": {
+        "financial_quality": {
+          "earnings_volatility": 0.7468749472330157,
+          "revenue_volatility": 0.418536752993947,
+          "severity_level": "high",
+          "severity_score": 3
+        },
+        "financial_risk_level": "moderate",
+        "model_insights": {
+          "insights": [],
+          "red_flags": [],
+          "valuation_concerns": []
+        },
+        "off_balance_sheet_risks": {
+          "debt_to_assets_ratio": 0.4281432570593963,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "overall_financial_score": 2.0,
+        "rag_insights": [],
+        "related_party_risks": {
+          "risk_factors": [],
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "revenue_recognition_risks": {
+          "complexity_factors": [],
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "financial_statements",
+          "rag_vectors",
+          "financial_models"
+        ]
+      }
+    },
+    "operational_risk": {
+      "status": "passed",
+      "result": {
+        "efficiency_risks": {
+          "margin_trend": 0.32655976952390386,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "operational_risk_level": "moderate",
+        "overall_operational_score": 2.25,
+        "personnel_risks": {
+          "executive_count": 4,
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "rag_insights": [],
+        "supply_chain_risks": {
+          "risk_factors": [
+            "Global supply chain dependencies",
+            "Geopolitical risks"
+          ],
+          "severity_level": "high",
+          "severity_score": 3
+        },
+        "technology_risks": {
+          "severity_level": "high",
+          "severity_score": 3
+        },
+        "vector_sources_used": [
+          "company_data",
+          "rag_vectors"
+        ]
+      }
+    },
+    "strategic_risk": {
+      "status": "passed",
+      "result": {
+        "competitive_risks": {
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "customer_concentration": {
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "industry_trends": {
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "market_position": {
+          "market_cap": 3000000000000,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "overall_strategic_score": 1.75,
+        "rag_insights": [],
+        "strategic_risk_level": "moderate",
+        "vector_sources_used": [
+          "market_data",
+          "rag_vectors"
+        ]
+      }
+    },
+    "reputational_risk": {
+      "status": "passed",
+      "result": {
+        "brand_perception": {
+          "sentiment_score": 0.15,
+          "severity_level": "low",
+          "severity_score": 1
+        },
+        "esg_compliance": {
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "executive_compensation": {
+          "executive_count": 4,
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "overall_reputational_score": 1.75,
+        "rag_insights": [],
+        "reputational_risk_level": "moderate",
+        "social_sentiment": {
+          "severity_level": "moderate",
+          "severity_score": 2
+        },
+        "vector_sources_used": [
+          "news_data",
+          "rag_vectors"
+        ]
+      }
+    }
+  }
+}
