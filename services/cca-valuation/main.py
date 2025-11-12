@@ -27,6 +27,7 @@ class CCAValuationEngine:
     """Advanced Comparable Company Analysis engine"""
 
     def __init__(self):
+        # TODO: Externalize these financial metrics. Fetch from a reliable source or make them configurable.
         # Industry-specific valuation multiples (EV/Revenue, EV/EBITDA, P/E)
         self.industry_multiples = {
             'technology': {
@@ -61,6 +62,7 @@ class CCAValuationEngine:
             }
         }
 
+        # TODO: These growth adjustments are subjective. Consider a more data-driven approach.
         # Growth stage adjustments
         self.growth_adjustments = {
             'hyper_growth': {'premium': 0.40, 'volatility': 1.5},  # 40% premium
@@ -188,7 +190,99 @@ class CCAValuationEngine:
             logger.warning(f"Error calculating EBITDA: {e}")
             return 0
 
-    def _analyze_peer_companies(self, peers: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def _fetch_peer_data_from_api(self, symbol: str) -> Optional[Dict[str, Any]]:
+        """Fetch comprehensive peer data from FMP API with retry logic"""
+        import requests
+        import time
+
+        fmp_api_key = os.getenv('FMP_API_KEY')
+        if not fmp_api_key:
+            logger.warning(f"⚠️ FMP_API_KEY not configured - cannot fetch peer data for {symbol}")
+            return None
+
+        max_retries = 3
+        retry_delay = 2  # seconds
+
+        for attempt in range(max_retries):
+            try:
+                if attempt > 0:
+                    wait_time = retry_delay * (2 ** attempt)  # Exponential backoff
+                    logger.info(f"⏳ Retry attempt {attempt + 1}/{max_retries} for {symbol}, waiting {wait_time}s...")
+                    time.sleep(wait_time)
+
+                # Get company profile
+                profile_url = f"https://financialmodelingprep.com/api/v3/profile/{symbol}"
+                response = requests.get(profile_url, params={'apikey': fmp_api_key}, timeout=30)
+
+                if response.status_code != 200:
+                    logger.warning(f"⚠️ FMP API returned status {response.status_code} for {symbol}")
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+
+                profile_data = response.json()
+                if not profile_data or not isinstance(profile_data, list) or len(profile_data) == 0:
+                    logger.warning(f"⚠️ FMP returned empty profile data for {symbol}")
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+
+                profile = profile_data[0]
+
+                # Get TTM income statement
+                income_url = f"https://financialmodelingprep.com/api/v3/income-statement/{symbol}"
+                income_response = requests.get(income_url, params={'apikey': fmp_api_key, 'limit': 1}, timeout=30)
+
+                ttm_income = {}
+                if income_response.status_code == 200:
+                    income_data = income_response.json()
+                    if income_data and isinstance(income_data, list) and len(income_data) > 0:
+                        ttm_income = income_data[0]
+
+                # Get balance sheet for debt and cash
+                balance_url = f"https://financialmodelingprep.com/api/v3/balance-sheet-statement/{symbol}"
+                balance_response = requests.get(balance_url, params={'apikey': fmp_api_key, 'limit': 1}, timeout=30)
+
+                ttm_balance = {}
+                if balance_response.status_code == 200:
+                    balance_data = balance_response.json()
+                    if balance_data and isinstance(balance_data, list) and len(balance_data) > 0:
+                        ttm_balance = balance_data[0]
+
+                # Construct peer data with all required fields
+                peer_info = {
+                    'symbol': symbol,
+                    'companyName': profile.get('companyName', symbol),
+                    'marketCap': profile.get('mktCap', 0),
+                    'price': profile.get('price', 0),
+                    'sector': profile.get('sector', ''),
+                    'industry': profile.get('industry', ''),
+                    'revenue': ttm_income.get('revenue', 0),
+                    'ebitda': ttm_income.get('ebitda', ttm_income.get('ebitdaratio', 0) * ttm_income.get('revenue', 0)),
+                    'netIncome': ttm_income.get('netIncome', 0),
+                    'totalDebt': ttm_balance.get('totalDebt', 0),
+                    'cashAndCashEquivalents': ttm_balance.get('cashAndCashEquivalents', 0)
+                }
+
+                # Validate that we got meaningful data
+                if peer_info['marketCap'] > 0 and peer_info['revenue'] > 0:
+                    logger.info(f"✅ Fetched peer data for {symbol}: ${peer_info['marketCap']/1e9:.1f}B market cap, ${peer_info['revenue']/1e9:.1f}B revenue")
+                    return peer_info
+                else:
+                    logger.warning(f"⚠️ Peer {symbol} has incomplete data (market_cap: {peer_info['marketCap']}, revenue: {peer_info['revenue']})")
+                    if attempt < max_retries - 1:
+                        continue
+                    return None
+
+            except Exception as e:
+                logger.error(f"❌ Error fetching peer data for {symbol} (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    continue
+                return None
+
+        return None
+
+    def _analyze_peer_companies(self, peers: List[Any]) -> Dict[str, Any]:
         """Analyze peer companies and calculate statistics"""
 
         if not peers:
@@ -197,30 +291,66 @@ class CCAValuationEngine:
         peer_metrics = []
 
         for peer in peers:
-            # Extract peer fundamentals (simplified - in production would fetch full data)
-            peer_fundamentals = {
-                'symbol': peer.get('symbol', ''),
-                'name': peer.get('companyName', ''),
-                'market_cap': peer.get('marketCap', 0),
-                'revenue': peer.get('revenue', 0),  # Would need to fetch actual data
-                'ebitda': peer.get('ebitda', 0),    # Would need to fetch actual data
-                'net_income': peer.get('netIncome', 0),
-                'price': peer.get('price', 0),
-                'sector': peer.get('sector', ''),
-                'industry': peer.get('industry', '')
-            }
+            # Handle both string symbols and full peer objects
+            if isinstance(peer, str):
+                # Peer is just a symbol string - fetch real data from API
+                logger.info(f"📥 Fetching peer data for {peer}...")
+                peer_data = self._fetch_peer_data_from_api(peer)
+
+                if peer_data:
+                    # Use fetched data
+                    peer_fundamentals = {
+                        'symbol': peer_data.get('symbol', peer),
+                        'name': peer_data.get('companyName', peer),
+                        'market_cap': peer_data.get('marketCap', 0),
+                        'revenue': peer_data.get('revenue', 0),
+                        'ebitda': peer_data.get('ebitda', 0),
+                        'net_income': peer_data.get('netIncome', 0),
+                        'price': peer_data.get('price', 0),
+                        'sector': peer_data.get('sector', ''),
+                        'industry': peer_data.get('industry', ''),
+                        'total_debt': peer_data.get('totalDebt', 0),
+                        'cash': peer_data.get('cashAndCashEquivalents', 0)
+                    }
+                else:
+                    # Skip peers without valid data
+                    logger.warning(f"⚠️ Skipping peer {peer} - no valid data available")
+                    continue
+            else:
+                # Peer is a dict with full data
+                peer_fundamentals = {
+                    'symbol': peer.get('symbol', ''),
+                    'name': peer.get('companyName', ''),
+                    'market_cap': peer.get('marketCap', 0),
+                    'revenue': peer.get('revenue', 0),
+                    'ebitda': peer.get('ebitda', 0),
+                    'net_income': peer.get('netIncome', 0),
+                    'price': peer.get('price', 0),
+                    'sector': peer.get('sector', ''),
+                    'industry': peer.get('industry', ''),
+                    'total_debt': peer.get('totalDebt', 0),
+                    'cash': peer.get('cashAndCashEquivalents', 0)
+                }
+
+            # Calculate enterprise value
+            ev = peer_fundamentals['market_cap'] + peer_fundamentals.get('total_debt', 0) - peer_fundamentals.get('cash', 0)
+            peer_fundamentals['enterprise_value'] = ev
 
             # Calculate multiples if data available
-            if peer_fundamentals['revenue'] > 0:
-                peer_fundamentals['ev_revenue'] = peer_fundamentals['market_cap'] / peer_fundamentals['revenue']
+            if peer_fundamentals['revenue'] > 0 and ev > 0:
+                peer_fundamentals['ev_revenue'] = ev / peer_fundamentals['revenue']
 
-            if peer_fundamentals['ebitda'] > 0:
-                peer_fundamentals['ev_ebitda'] = peer_fundamentals['market_cap'] / peer_fundamentals['ebitda']
+            if peer_fundamentals['ebitda'] > 0 and ev > 0:
+                peer_fundamentals['ev_ebitda'] = ev / peer_fundamentals['ebitda']
 
-            if peer_fundamentals['net_income'] > 0:
+            if peer_fundamentals['net_income'] > 0 and peer_fundamentals['market_cap'] > 0:
                 peer_fundamentals['p_e'] = peer_fundamentals['market_cap'] / peer_fundamentals['net_income']
 
             peer_metrics.append(peer_fundamentals)
+
+        # Validate we have enough peers
+        if len(peer_metrics) < 3:
+            logger.warning(f"⚠️ Only {len(peer_metrics)} peers with valid data (need at least 3)")
 
         # Calculate peer statistics
         peer_stats = self._calculate_peer_statistics(peer_metrics)
@@ -454,18 +584,31 @@ class CCAValuationEngine:
                 'price_per_share': (enterprise_value - company_fundamentals['debt'] + company_fundamentals['cash']) / company_fundamentals['shares_outstanding'] if company_fundamentals['shares_outstanding'] > 0 else 0
             }
 
-        # P/E valuation
+        # P/E valuation - handle negative earnings
         if 'p_e' in adjusted_multiples:
             multiple = adjusted_multiples['p_e']['adjusted_value']
             net_income = company_fundamentals['net_income']
-            equity_value = multiple * net_income
 
-            valuations['p_e'] = {
-                'multiple': multiple,
-                'metric_value': net_income,
-                'equity_value': equity_value,
-                'price_per_share': equity_value / company_fundamentals['shares_outstanding'] if company_fundamentals['shares_outstanding'] > 0 else 0
-            }
+            # Only apply P/E multiple if earnings are positive
+            if net_income > 0:
+                equity_value = multiple * net_income
+
+                valuations['p_e'] = {
+                    'multiple': multiple,
+                    'metric_value': net_income,
+                    'equity_value': equity_value,
+                    'price_per_share': equity_value / company_fundamentals['shares_outstanding'] if company_fundamentals['shares_outstanding'] > 0 else 0,
+                    'applicable': True
+                }
+            else:
+                logger.warning(f"⚠️ P/E multiple not applicable - company has negative or zero earnings: ${net_income:,.0f}")
+                valuations['p_e'] = {
+                    'applicable': False,
+                    'reason': 'Negative or zero earnings',
+                    'metric_value': net_income,
+                    'alternative_recommended': 'EV/Revenue or EV/EBITDA',
+                    'price_per_share': 0
+                }
 
         # Calculate blended valuation
         blended_valuation = self._calculate_blended_valuation(valuations)
@@ -481,20 +624,30 @@ class CCAValuationEngine:
         """Calculate blended valuation from multiple methods"""
 
         price_estimates = []
+        methods_used = []
 
-        # Collect price per share estimates
+        # Collect price per share estimates - only from applicable valuations
         for method, valuation in valuations.items():
+            # Check if valuation is applicable (skip non-applicable P/E for negative earnings)
+            if valuation.get('applicable', True) == False:
+                logger.info(f"Skipping {method} for blended valuation: {valuation.get('reason', 'Not applicable')}")
+                continue
+
             if 'price_per_share' in valuation and valuation['price_per_share'] > 0:
                 price_estimates.append(valuation['price_per_share'])
+                methods_used.append(method)
 
         if not price_estimates:
             return {'error': 'No valid valuations available'}
 
         blended_price = statistics.mean(price_estimates)
 
+        logger.info(f"✅ Blended valuation: ${blended_price:.2f} per share using {len(price_estimates)} methods: {', '.join(methods_used)}")
+
         return {
             'blended_price_per_share': blended_price,
             'valuation_methods_used': len(price_estimates),
+            'methods': methods_used,
             'price_range': [min(price_estimates), max(price_estimates)],
             'standard_deviation': statistics.stdev(price_estimates) if len(price_estimates) > 1 else 0
         }

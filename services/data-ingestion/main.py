@@ -677,11 +677,84 @@ class DataIngestionService:
                 pass
             
             logger.info(f"Successfully integrated yfinance data for {symbol}")
-            
+
         except Exception as e:
             logger.error(f"Error getting company info for {symbol}: {e}")
             company_info['error'] = str(e)
-        
+
+        # CRITICAL: Validate required fields before returning
+        required_fields = {
+            'companyName': 'Company name',
+            'price': 'Current stock price',
+            'mktCap': 'Market capitalization',
+            'sharesOutstanding': 'Shares outstanding'
+        }
+
+        missing_fields = []
+        zero_fields = []
+
+        for field, description in required_fields.items():
+            value = company_info.get(field)
+            if not value:
+                # Check if yfinance has the data as fallback
+                if field == 'companyName':
+                    yf_name = company_info.get('yfinance_data', {}).get('longName') or company_info.get('yfinance_data', {}).get('shortName')
+                    if yf_name:
+                        company_info['companyName'] = yf_name
+                        logger.info(f"✅ Using yfinance company name: {yf_name}")
+                    else:
+                        missing_fields.append(f"{description} ({field})")
+                elif field == 'price':
+                    yf_price = company_info.get('yfinance_data', {}).get('current_price')
+                    if yf_price and yf_price > 0:
+                        company_info['price'] = yf_price
+                        logger.info(f"✅ Using yfinance price: ${yf_price:.2f}")
+                    else:
+                        missing_fields.append(f"{description} ({field})")
+                elif field == 'mktCap':
+                    yf_mcap = company_info.get('yfinance_data', {}).get('market_cap')
+                    if yf_mcap and yf_mcap > 0:
+                        company_info['mktCap'] = yf_mcap
+                        logger.info(f"✅ Using yfinance market cap: ${yf_mcap/1e9:.2f}B")
+                    else:
+                        missing_fields.append(f"{description} ({field})")
+                else:
+                    missing_fields.append(f"{description} ({field})")
+            elif isinstance(value, (int, float)) and value == 0:
+                # Try fallback for zero values
+                if field == 'price':
+                    yf_price = company_info.get('yfinance_data', {}).get('current_price')
+                    if yf_price and yf_price > 0:
+                        company_info['price'] = yf_price
+                        logger.info(f"✅ Replaced zero price with yfinance: ${yf_price:.2f}")
+                    else:
+                        zero_fields.append(f"{description} ({field})")
+                elif field == 'mktCap':
+                    yf_mcap = company_info.get('yfinance_data', {}).get('market_cap')
+                    if yf_mcap and yf_mcap > 0:
+                        company_info['mktCap'] = yf_mcap
+                        logger.info(f"✅ Replaced zero market cap with yfinance: ${yf_mcap/1e9:.2f}B")
+                    else:
+                        zero_fields.append(f"{description} ({field})")
+                else:
+                    zero_fields.append(f"{description} ({field})")
+
+        if missing_fields:
+            error_msg = f"Missing required data for {symbol}: {', '.join(missing_fields)}"
+            logger.error(f"❌ {error_msg}")
+            raise ValueError(error_msg)
+
+        if zero_fields:
+            error_msg = f"Zero values in critical fields for {symbol}: {', '.join(zero_fields)}"
+            logger.error(f"❌ {error_msg}")
+            raise ValueError(error_msg)
+
+        logger.info(f"✅ Data validation passed for {symbol}:")
+        logger.info(f"   - Company: {company_info.get('companyName')}")
+        logger.info(f"   - Price: ${company_info.get('price'):.2f}")
+        logger.info(f"   - Market Cap: ${company_info.get('mktCap')/1e9:.2f}B")
+        logger.info(f"   - Shares Outstanding: {company_info.get('sharesOutstanding'):,.0f}")
+
         return company_info
 
     def _fetch_sec_filings(self, symbol: str, company_info: Dict[str, Any]) -> Dict[str, Any]:

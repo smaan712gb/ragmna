@@ -255,24 +255,85 @@ class ReportGenerator:
         doc.add_paragraph("This analysis uses a combination of DCF and comparable company analysis methods, adjusted for company-specific risk factors and market conditions.")
 
     def _generate_summary_metrics(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate summary metrics for dashboard"""
+        """Generate summary metrics for dashboard with correct data extraction paths"""
 
-        target_data = data.get('target_data', {})
-        market = target_data.get('market', {})
+        # Extract from actual data structure (after workflow completes)
+        # Try multiple paths for backward compatibility
 
-        valuation = data.get('valuation', {})
-        dcf = valuation.get('dcf', {})
-        cca = valuation.get('cca', {})
+        # Company name - try multiple paths
+        company_name = 'Unknown'
+        if 'target_company' in data:
+            target_company = data.get('target_company', {})
+            company_name = target_company.get('companyName') or target_company.get('company_name', 'Unknown')
+        elif 'company_profiles' in data:
+            profiles = data.get('company_profiles', {})
+            target_profile = profiles.get('target', {})
+            company_name = target_profile.get('company_name', 'Unknown')
+
+        # Price and Market Cap - try data ingestion results
+        current_price = 0
+        market_cap = 0
+        if 'data_ingestion' in data:
+            ingestion = data.get('data_ingestion', {})
+            target_data = ingestion.get('target_data_ingested', {})
+            current_price = target_data.get('price', 0)
+            market_cap = target_data.get('mktCap', 0)
+        elif 'target_company' in data:
+            target_company = data.get('target_company', {})
+            current_price = target_company.get('price', 0)
+            market_cap = target_company.get('mktCap', 0)
+
+        # DCF Value - extract from valuation_analysis
+        dcf_value = 0
+        if 'valuation_analysis' in data:
+            valuation_analysis = data.get('valuation_analysis', {})
+            dcf = valuation_analysis.get('dcf', {})
+            final_valuation = dcf.get('final_valuation', {})
+            dcf_value = final_valuation.get('equity_value_per_share', 0)
+
+        # CCA Value - extract from valuation_analysis
+        cca_value = 0
+        if 'valuation_analysis' in data:
+            valuation_analysis = data.get('valuation_analysis', {})
+            cca = valuation_analysis.get('cca', {})
+            implied_valuation = cca.get('implied_valuation', {})
+            blended = implied_valuation.get('blended_valuation', {})
+            cca_value = blended.get('blended_price_per_share', 0)
+
+        # Classification
+        classification = 'unknown'
+        if 'company_profiles' in data:
+            profiles = data.get('company_profiles', {})
+            target_profile = profiles.get('target', {})
+            classification = target_profile.get('classification', 'unknown')
+
+        # Risk Level
+        risk_level = 'unknown'
+        if 'due_diligence' in data:
+            dd = data.get('due_diligence', {})
+            overall = dd.get('overall_assessment', {})
+            risk_level = overall.get('overall_risk_level', 'unknown')
+
+        symbol = data.get('target_symbol', 'Unknown')
+
+        logger.info(f"✅ Summary metrics extracted:")
+        logger.info(f"   - Company: {company_name} ({symbol})")
+        logger.info(f"   - Price: ${current_price:.2f}")
+        logger.info(f"   - Market Cap: ${market_cap/1e9:.2f}B" if market_cap > 0 else "   - Market Cap: $0")
+        logger.info(f"   - DCF Value: ${dcf_value:.2f}")
+        logger.info(f"   - CCA Value: ${cca_value:.2f}")
+        logger.info(f"   - Classification: {classification}")
+        logger.info(f"   - Risk Level: {risk_level}")
 
         return {
-            'company_name': target_data.get('profile', [{}])[0].get('companyName', 'Unknown'),
-            'symbol': data.get('target_symbol', 'Unknown'),
-            'current_price': market.get('price', 0),
-            'market_cap': market.get('marketCap', 0),
-            'dcf_value': dcf.get('final_valuation', {}).get('equity_value_per_share', 0),
-            'cca_value': cca.get('implied_valuation', {}).get('blended_valuation', {}).get('blended_price_per_share', 0),
-            'classification': data.get('classification', {}).get('primary_classification', 'unknown'),
-            'risk_level': data.get('due_diligence', {}).get('overall_assessment', {}).get('overall_risk_level', 'unknown')
+            'company_name': company_name,
+            'symbol': symbol,
+            'current_price': current_price,
+            'market_cap': market_cap,
+            'dcf_value': dcf_value,
+            'cca_value': cca_value,
+            'classification': classification,
+            'risk_level': risk_level
         }
 
     def _generate_chart_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
