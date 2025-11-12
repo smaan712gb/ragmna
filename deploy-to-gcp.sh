@@ -5,11 +5,11 @@
 set -e
 
 PROJECT_ID=$1
-REGION=${2:-us-central1}
+REGION=${2:-us-west1}
 
 if [ -z "$PROJECT_ID" ]; then
     echo "Usage: ./deploy-to-gcp.sh YOUR_PROJECT_ID [REGION]"
-    echo "Example: ./deploy-to-gcp.sh my-ma-platform us-central1"
+    echo "Example: ./deploy-to-gcp.sh my-ma-platform us-west1"
     exit 1
 fi
 
