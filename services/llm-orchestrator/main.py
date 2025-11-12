@@ -193,9 +193,12 @@ class RAGManager:
             context_text = ""
             if contexts:
                 context_parts = []
-                for ctx in contexts.get('contexts', [])[:5]:  # Limit to top 5 contexts
-                    if 'text' in ctx:
-                        context_parts.append(ctx['text'])
+                # contexts structure: {'contexts': [{'text': '...'}, ...]}
+                contexts_list = contexts.get('contexts', [])
+                if isinstance(contexts_list, list):
+                    for ctx in contexts_list[:5]:  # Limit to top 5 contexts
+                        if isinstance(ctx, dict) and 'text' in ctx:
+                            context_parts.append(ctx['text'])
                 context_text = "\n\n".join(context_parts)
 
             # Create enhanced prompt
@@ -298,8 +301,9 @@ class CompanyClassifier:
         try:
             # Prepare RAG context text
             context_text = ""
-            contexts_list = rag_contexts.get('contexts', {}).get('contexts', [])
-            if contexts_list:
+            # rag_contexts structure: {'contexts': [{'text': '...'}, ...]}
+            contexts_list = rag_contexts.get('contexts', [])
+            if contexts_list and isinstance(contexts_list, list):
                 context_parts = []
                 for ctx in contexts_list[:3]:
                     if isinstance(ctx, dict) and 'text' in ctx:
