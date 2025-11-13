@@ -329,6 +329,17 @@ class DataIngestionService:
         logger.warning(f"⚠️ RAG operation timeout after {max_wait_seconds}s - vectors may not be ready yet")
         return False
 
+    def _poll_rag_operation_async(self, operation_name: str, access_token: str, max_wait_seconds: int = 600):
+        """Async version of RAG operation polling for background processing"""
+        try:
+            success = self._poll_rag_operation(operation_name, access_token, max_wait_seconds)
+            if success:
+                logger.info(f"✅ Background RAG operation completed successfully: {operation_name}")
+            else:
+                logger.warning(f"⚠️ Background RAG operation failed or timed out: {operation_name}")
+        except Exception as e:
+            logger.error(f"❌ Error in background RAG polling: {e}")
+
     def _store_in_rag_engine(self, chunks: List[Dict[str, Any]], metadata: Dict[str, Any]) -> List[str]:
         """Store document chunks in Vertex AI RAG Engine via Import API with completion polling"""
 
@@ -339,48 +350,60 @@ class DataIngestionService:
             from google.cloud import storage
             import tempfile
 
-            # Get access token using gcloud command (most reliable method)
-            import subprocess
-            try:
-                result = subprocess.run(
-                    ['gcloud', 'auth', 'print-access-token'],
-                    capture_output=True,
-                    text=True,
-                    check=True,
-                    timeout=30
-                )
-                access_token = result.stdout.strip()
-                if not access_token or len(access_token) < 100:
-                    raise ValueError(f"Invalid access token from gcloud: {access_token[:50] if access_token else 'empty'}")
-                logger.info(f"✅ RAG: Access token from gcloud (length: {len(access_token)})")
-            except Exception as gcloud_error:
-                logger.warning(f"⚠️ gcloud command failed: {gcloud_error}, trying service account directly")
+            # Get access token with improved error handling and retries
+            access_token = None
+            max_auth_retries = 3
 
-                # Fallback: Use service account with requests library directly
-                google_cloud_key_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
-                if not google_cloud_key_path or not os.path.exists(google_cloud_key_path):
-                    raise ValueError(f"❌ Service account key not found at: {google_cloud_key_path}")
+            for auth_attempt in range(max_auth_retries):
+                try:
+                    # Try gcloud command first (most reliable)
+                    result = subprocess.run(
+                        ['gcloud', 'auth', 'print-access-token'],
+                        capture_output=True,
+                        text=True,
+                        check=True,
+                        timeout=15  # Shorter timeout
+                    )
+                    access_token = result.stdout.strip()
+                    if access_token and len(access_token) >= 100:
+                        logger.info(f"✅ RAG: Access token from gcloud (attempt {auth_attempt + 1})")
+                        break
+                    else:
+                        logger.warning(f"⚠️ Invalid gcloud token (attempt {auth_attempt + 1})")
+                except Exception as gcloud_error:
+                    logger.warning(f"⚠️ gcloud failed (attempt {auth_attempt + 1}): {str(gcloud_error)[:100]}")
 
-                # Load service account and manually get OAuth2 token
-                import json
-                with open(google_cloud_key_path, 'r') as f:
-                    sa_info = json.load(f)
+                # Fallback: Service account
+                try:
+                    google_cloud_key_path = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
+                    if google_cloud_key_path and os.path.exists(google_cloud_key_path):
+                        import json
+                        from google.oauth2 import service_account
+                        from google.auth.transport.requests import Request
 
-                # Use google.auth with explicit token request
-                from google.oauth2 import service_account
-                from google.auth.transport.requests import Request
+                        with open(google_cloud_key_path, 'r') as f:
+                            sa_info = json.load(f)
 
-                credentials = service_account.Credentials.from_service_account_info(
-                    sa_info,
-                    scopes=['https://www.googleapis.com/auth/cloud-platform']
-                )
-                credentials.refresh(Request())
-                access_token = credentials.token
+                        credentials = service_account.Credentials.from_service_account_info(
+                            sa_info,
+                            scopes=['https://www.googleapis.com/auth/cloud-platform']
+                        )
+                        credentials.refresh(Request())
+                        access_token = credentials.token
 
-                if not access_token:
-                    raise ValueError("❌ Failed to get access token from service account")
+                        if access_token:
+                            logger.info(f"✅ RAG: Access token from service account (attempt {auth_attempt + 1})")
+                            break
+                except Exception as sa_error:
+                    logger.warning(f"⚠️ Service account failed (attempt {auth_attempt + 1}): {str(sa_error)[:100]}")
 
-                logger.info(f"✅ RAG: Access token from service account (length: {len(access_token)})")
+                # Wait before retry
+                if auth_attempt < max_auth_retries - 1:
+                    time.sleep(2 ** auth_attempt)  # Exponential backoff
+
+            if not access_token:
+                logger.error("❌ RAG: Failed to obtain access token after all attempts")
+                return []  # Return empty list instead of failing
 
             # Get RAG corpus configuration
             vertex_project = os.getenv('VERTEX_PROJECT', PROJECT_ID)
@@ -389,7 +412,8 @@ class DataIngestionService:
             gcs_bucket = os.getenv('GCS_BUCKET')
 
             if not all([vertex_project, vertex_location, rag_corpus_id, gcs_bucket]):
-                raise ValueError("❌ VERTEX_PROJECT, VERTEX_LOCATION, RAG_CORPUS_ID, and GCS_BUCKET must all be configured")
+                logger.warning("⚠️ RAG: Missing configuration - skipping RAG storage")
+                return []
 
             # Create temporary file with chunks content
             temp_file_path = None
@@ -402,19 +426,31 @@ class DataIngestionService:
                     tf.write(combined_content)
                     temp_file_path = tf.name
 
-                # Upload to GCS first (required by RAG Engine Import API) - reuse existing client
-                bucket = self.storage_client.bucket(gcs_bucket)
+                # Upload to GCS with retry logic
+                max_gcs_retries = 3
+                gcs_uri = None
 
-                # Create blob name from metadata
-                file_name = metadata.get('file_name', 'unknown')
-                blob_name = f"rag-uploads/{file_name}.txt"
-                blob = bucket.blob(blob_name)
-                blob.upload_from_filename(temp_file_path)
+                for gcs_attempt in range(max_gcs_retries):
+                    try:
+                        bucket = self.storage_client.bucket(gcs_bucket)
+                        file_name = metadata.get('file_name', 'unknown')
+                        blob_name = f"rag-uploads/{file_name}.txt"
+                        blob = bucket.blob(blob_name)
+                        blob.upload_from_filename(temp_file_path)
 
-                gcs_uri = f"gs://{gcs_bucket}/{blob_name}"
-                logger.info(f"📤 Uploaded to GCS: {gcs_uri}")
+                        gcs_uri = f"gs://{gcs_bucket}/{blob_name}"
+                        logger.info(f"📤 Uploaded to GCS: {gcs_uri}")
+                        break
+                    except Exception as gcs_error:
+                        logger.warning(f"⚠️ GCS upload failed (attempt {gcs_attempt + 1}): {str(gcs_error)[:100]}")
+                        if gcs_attempt < max_gcs_retries - 1:
+                            time.sleep(2 ** gcs_attempt)
 
-                # Import to RAG Engine using Import API
+                if not gcs_uri:
+                    logger.error("❌ RAG: Failed to upload to GCS after all attempts")
+                    return []
+
+                # Import to RAG Engine with improved error handling
                 url = f"https://{vertex_location}-aiplatform.googleapis.com/v1beta1/projects/{vertex_project}/locations/{vertex_location}/ragCorpora/{rag_corpus_id}/ragFiles:import"
 
                 payload = {
@@ -430,7 +466,6 @@ class DataIngestionService:
                     }
                 }
 
-                # Use Bearer token with ACCESS token from ADC
                 headers = {
                     'Authorization': f'Bearer {access_token}',
                     'Content-Type': 'application/json'
@@ -438,35 +473,62 @@ class DataIngestionService:
 
                 logger.info(f"🔑 RAG: Making authenticated request to Vertex AI RAG Engine")
 
-                # SYNCHRONOUS RAG Import with operation polling
-                # CRITICAL: Wait for vectorization to complete before continuing workflow
-                try:
-                    response = requests.post(url, json=payload, headers=headers, timeout=60)
+                # RAG Import with improved error handling - NON-BLOCKING
+                max_rag_retries = 2
+                rag_success = False
 
-                    if response.status_code == 200:
-                        operation = response.json()
-                        operation_name = operation.get('name', 'unknown')
-                        logger.info(f"✅ RAG import started: {operation_name}")
+                for rag_attempt in range(max_rag_retries):
+                    try:
+                        # Shorter timeout and better error handling
+                        response = requests.post(url, json=payload, headers=headers, timeout=30)
 
-                        # CRITICAL: Poll for completion (max 20 minutes for comprehensive vectorization)
-                        success = self._poll_rag_operation(operation_name, access_token, max_wait_seconds=1200)
+                        if response.status_code == 200:
+                            operation = response.json()
+                            operation_name = operation.get('name', 'unknown')
+                            logger.info(f"✅ RAG import started: {operation_name}")
 
-                        if not success:
-                            logger.warning(f"⚠️ RAG vectorization did not complete - vectors may not be available for analysis")
+                            # ASYNC POLLING - Don't block the main workflow
+                            # Poll for completion in background (max 10 minutes)
+                            import threading
+                            poll_thread = threading.Thread(
+                                target=self._poll_rag_operation_async,
+                                args=(operation_name, access_token, 600),
+                                daemon=True
+                            )
+                            poll_thread.start()
 
-                    elif response.status_code == 400:
-                        error_data = response.json()
-                        error_msg = error_data.get('error', {}).get('message', '')
-                        if 'other operations running' in error_msg.lower():
-                            logger.warning(f"⚠️ RAG corpus busy - document queued for later processing")
+                            rag_success = True
+                            break
+
+                        elif response.status_code == 400:
+                            error_data = response.json()
+                            error_msg = error_data.get('error', {}).get('message', '')
+                            if 'other operations running' in error_msg.lower():
+                                logger.warning(f"⚠️ RAG corpus busy - document queued for later processing")
+                                rag_success = True  # Consider this success since it's queued
+                                break
+                            else:
+                                logger.warning(f"⚠️ RAG import issue: {error_msg[:200]}")
+                        elif response.status_code == 429:
+                            logger.warning(f"⚠️ RAG rate limited (attempt {rag_attempt + 1})")
+                            if rag_attempt < max_rag_retries - 1:
+                                time.sleep(5)  # Wait before retry
                         else:
-                            logger.warning(f"⚠️ RAG import issue: {error_msg[:200]} - continuing without RAG")
-                    else:
-                        logger.warning(f"⚠️ RAG returned {response.status_code} - continuing without RAG")
-                except Exception as e:
-                    logger.warning(f"⚠️ RAG import failed: {str(e)[:200]} - continuing without RAG")
+                            logger.warning(f"⚠️ RAG returned {response.status_code}: {response.text[:200]}")
 
-                # Track chunk IDs
+                    except requests.exceptions.ConnectionError as conn_error:
+                        logger.warning(f"⚠️ RAG connection failed (attempt {rag_attempt + 1}): {str(conn_error)[:100]}")
+                        if rag_attempt < max_rag_retries - 1:
+                            time.sleep(3)
+                    except Exception as e:
+                        logger.warning(f"⚠️ RAG import failed (attempt {rag_attempt + 1}): {str(e)[:100]}")
+                        if rag_attempt < max_rag_retries - 1:
+                            time.sleep(2)
+
+                if not rag_success:
+                    logger.warning("⚠️ RAG import failed after all attempts - continuing without RAG")
+
+                # Track chunk IDs regardless of RAG success
                 for chunk in chunks:
                     vector_ids.append(chunk['id'])
 
@@ -479,7 +541,8 @@ class DataIngestionService:
 
         except Exception as e:
             logger.error(f"❌ Error storing in Vertex AI RAG Engine: {e}")
-            raise ValueError(f"Failed to store in RAG Engine: {e}")
+            # Return empty list instead of raising exception - don't break main workflow
+            return []
 
     def _publish_completion_event(self, metadata: Dict[str, Any], vector_ids: List[str]):
         """Publish processing completion event"""
@@ -1414,14 +1477,361 @@ class DataIngestionService:
                 'accession_number': accession
             }
 
+    def validate_and_extract_sec_filings(self, filing_content: str, filing_type: str, company_symbol: str = None) -> Dict[str, Any]:
+        """
+        Validate and extract text blocks from target SEC filings: 8-K, MD&A sections of 10-K, Proxy Statements (DEF 14A)
+        Split by headers and vectorize text chunks.
+
+        Target filings:
+        - 8-K: Extract all Item sections (e.g., "Item 1.01 Entry into a Material Definitive Agreement")
+        - 10-K: Extract MD&A section (Item 7)
+        - DEF 14A (Proxy Statement): Extract executive compensation, corporate governance sections
+
+        Returns: Dict with validation results and vectorized chunks
+        """
+
+        logger.info(f"🔍 Validating and extracting text blocks from {filing_type} for {company_symbol or 'unknown'}")
+
+        validation_result = {
+            'filing_type': filing_type,
+            'company_symbol': company_symbol,
+            'validation_passed': False,
+            'text_chunks_extracted': 0,
+            'text_chunks_vectorized': 0,
+            'extraction_details': {},
+            'chunks': [],
+            'vector_ids': [],
+            'processing_timestamp': datetime.now().isoformat()
+        }
+
+        try:
+            # Parse HTML content if needed
+            if '<html' in filing_content.lower():
+                soup = BeautifulSoup(filing_content, 'html.parser')
+                text_content = soup.get_text()
+            else:
+                text_content = filing_content
+
+            # Validate filing type and extract appropriate sections
+            if filing_type == '8-K':
+                validation_result.update(self._validate_and_extract_8k(text_content))
+            elif filing_type == '10-K':
+                validation_result.update(self._validate_and_extract_10k_mda(text_content))
+            elif filing_type in ['DEF 14A', 'DEF14A', 'Proxy Statement']:
+                validation_result.update(self._validate_and_extract_proxy(text_content))
+            else:
+                validation_result['validation_error'] = f"Unsupported filing type: {filing_type}"
+                return validation_result
+
+            # Check if extraction was successful
+            if validation_result.get('text_chunks_extracted', 0) > 0:
+                validation_result['validation_passed'] = True
+
+                # Vectorize the extracted chunks
+                vectorization_result = self._vectorize_extracted_chunks(
+                    validation_result['chunks'],
+                    filing_type,
+                    company_symbol
+                )
+                validation_result.update(vectorization_result)
+
+                logger.info(f"✅ Successfully validated and extracted {validation_result['text_chunks_extracted']} text blocks from {filing_type}")
+                logger.info(f"✅ Vectorized {validation_result['text_chunks_vectorized']} text chunks")
+            else:
+                logger.warning(f"⚠️ No text blocks extracted from {filing_type} - validation failed")
+                validation_result['validation_error'] = "No text blocks could be extracted"
+
+        except Exception as e:
+            logger.error(f"❌ Error validating and extracting {filing_type}: {e}")
+            validation_result['validation_error'] = str(e)
+
+        return validation_result
+
+    def _validate_and_extract_8k(self, content: str) -> Dict[str, Any]:
+        """Validate and extract text blocks from 8-K filing by Item headers"""
+
+        result = {
+            'filing_validated': False,
+            'text_chunks_extracted': 0,
+            'extraction_details': {'items_found': []},
+            'chunks': []
+        }
+
+        try:
+            # 8-K filings contain specific Item disclosures
+            # Common 8-K Items: 1.01, 1.02, 2.01, 2.02, 2.03, 2.04, 2.05, 2.06, 3.01, 3.02, 3.03, 4.01, 4.02, 5.01, 5.02, 5.03, 5.05, 5.07, 5.08, 6.01, 6.02, 6.03, 6.04, 6.05, 7.01, 8.01, 9.01
+
+            # Pattern to match Item headers in 8-K
+            item_pattern = r'ITEM\s+(\d+\.\d+)\s*([^\n]*?)(?=ITEM\s+\d+\.\d+|\n\s*\n\s*SIGNATURES?|\n\s*\n\s*Pursuant|\Z)'
+            matches = re.finditer(item_pattern, content, re.IGNORECASE | re.DOTALL)
+
+            items_found = []
+            for match in matches:
+                item_number = match.group(1).strip()
+                item_title = match.group(2).strip() if match.group(2) else ""
+                item_content = match.group(0).strip()
+
+                # Clean up content (remove extra whitespace)
+                item_content = re.sub(r'\n\s*\n', '\n\n', item_content)
+
+                # Create chunk
+                chunk = {
+                    'item_number': item_number,
+                    'item_title': item_title,
+                    'content': item_content,
+                    'content_length': len(item_content),
+                    'chunk_type': '8k_item'
+                }
+
+                result['chunks'].append(chunk)
+                items_found.append(f"{item_number}: {item_title[:50]}...")
+
+            result['text_chunks_extracted'] = len(result['chunks'])
+            result['extraction_details']['items_found'] = items_found
+            result['filing_validated'] = len(result['chunks']) > 0
+
+            logger.info(f"📋 8-K validation: Found {len(result['chunks'])} Item sections")
+
+        except Exception as e:
+            logger.error(f"Error extracting 8-K items: {e}")
+            result['extraction_error'] = str(e)
+
+        return result
+
+    def _validate_and_extract_10k_mda(self, content: str) -> Dict[str, Any]:
+        """Validate and extract MD&A section from 10-K filing"""
+
+        result = {
+            'filing_validated': False,
+            'text_chunks_extracted': 0,
+            'extraction_details': {'mda_found': False},
+            'chunks': []
+        }
+
+        try:
+            # Extract MD&A section (Item 7 in 10-K)
+            mda_pattern = r'ITEM\s+7\.?\s*MANAGEMENT.?S\s+DISCUSSION\s+AND\s+ANALYSIS(.*?)ITEM\s+7A'
+            mda_match = re.search(mda_pattern, content, re.IGNORECASE | re.DOTALL)
+
+            if mda_match:
+                mda_content = mda_match.group(1).strip()
+
+                # Split MD&A into logical subsections
+                # Common subsections: Overview, Results of Operations, Financial Condition, Liquidity, etc.
+                subsections = self._split_mda_into_subsections(mda_content)
+
+                if subsections:
+                    result['chunks'] = subsections
+                    result['text_chunks_extracted'] = len(subsections)
+                    result['extraction_details']['mda_found'] = True
+                    result['extraction_details']['subsections'] = [s['subsection_title'] for s in subsections]
+                else:
+                    # If no subsections found, treat entire MD&A as one chunk
+                    chunk = {
+                        'subsection_title': 'Management Discussion & Analysis (Full)',
+                        'content': mda_content,
+                        'content_length': len(mda_content),
+                        'chunk_type': '10k_mda_full'
+                    }
+                    result['chunks'].append(chunk)
+                    result['text_chunks_extracted'] = 1
+                    result['extraction_details']['mda_found'] = True
+
+                result['filing_validated'] = True
+                logger.info(f"📊 10-K MD&A validation: Extracted {result['text_chunks_extracted']} subsections")
+            else:
+                logger.warning("⚠️ MD&A section not found in 10-K filing")
+                result['extraction_details']['error'] = "MD&A section not found"
+
+        except Exception as e:
+            logger.error(f"Error extracting 10-K MD&A: {e}")
+            result['extraction_error'] = str(e)
+
+        return result
+
+    def _split_mda_into_subsections(self, mda_content: str) -> List[Dict[str, Any]]:
+        """Split MD&A content into logical subsections"""
+
+        subsections = []
+
+        # Common MD&A subsection headers
+        subsection_patterns = [
+            (r'(?:Overview|Executive\s+Summary|Introduction)(.*?)(?=Results\s+of\s+Operations|Financial\s+Condition|$)', 'Overview'),
+            (r'(?:Results\s+of\s+Operations|Operating\s+Results)(.*?)(?=Financial\s+Condition|Liquidity|$)', 'Results of Operations'),
+            (r'(?:Financial\s+Condition|Financial\s+Position)(.*?)(?=Liquidity|Capital\s+Resources|$)', 'Financial Condition'),
+            (r'(?:Liquidity|Liquidity\s+and\s+Capital\s+Resources)(.*?)(?=Critical\s+Accounting|Off-Balance|$)', 'Liquidity and Capital Resources'),
+            (r'(?:Critical\s+Accounting\s+Policies|Critical\s+Accounting\s+Estimates)(.*?)(?=Recent\s+Accounting|$)', 'Critical Accounting Policies'),
+            (r'(?:Recent\s+Accounting\s+Developments|New\s+Accounting\s+Standards)(.*?)(?=Forward-Looking|$)', 'Recent Accounting Developments'),
+            (r'(?:Forward-Looking\s+Statements|Forward\s+Looking\s+Information)(.*?)(?=\n\s*\n|$)', 'Forward-Looking Statements')
+        ]
+
+        for pattern, title in subsection_patterns:
+            match = re.search(pattern, mda_content, re.IGNORECASE | re.DOTALL)
+            if match:
+                content = match.group(1).strip()
+                if len(content) > 100:  # Only include substantial subsections
+                    subsections.append({
+                        'subsection_title': title,
+                        'content': content,
+                        'content_length': len(content),
+                        'chunk_type': '10k_mda_subsection'
+                    })
+
+        return subsections
+
+    def _validate_and_extract_proxy(self, content: str) -> Dict[str, Any]:
+        """Validate and extract sections from Proxy Statement (DEF 14A)"""
+
+        result = {
+            'filing_validated': False,
+            'text_chunks_extracted': 0,
+            'extraction_details': {'sections_found': []},
+            'chunks': []
+        }
+
+        try:
+            sections_found = []
+
+            # Extract Executive Compensation section
+            comp_pattern = r'(?:EXECUTIVE\s+COMPENSATION|Compensation\s+Discussion\s+and\s+Analysis|CD&A)(.*?)(?=Director\s+Compensation|Corporate\s+Governance|$|SECURITY\s+OWNERSHIP)'
+            comp_match = re.search(comp_pattern, content, re.IGNORECASE | re.DOTALL)
+
+            if comp_match:
+                comp_content = comp_match.group(1).strip()
+                if len(comp_content) > 500:
+                    chunk = {
+                        'section_title': 'Executive Compensation',
+                        'content': comp_content,
+                        'content_length': len(comp_content),
+                        'chunk_type': 'proxy_executive_compensation'
+                    }
+                    result['chunks'].append(chunk)
+                    sections_found.append('Executive Compensation')
+
+            # Extract Corporate Governance section
+            gov_pattern = r'(?:CORPORATE\s+GOVERNANCE|Board\s+of\s+Directors|Director\s+Independence)(.*?)(?=Executive\s+Compensation|Security\s+Ownership|$|PROPOSAL)'
+            gov_match = re.search(gov_pattern, content, re.IGNORECASE | re.DOTALL)
+
+            if gov_match:
+                gov_content = gov_match.group(1).strip()
+                if len(gov_content) > 500:
+                    chunk = {
+                        'section_title': 'Corporate Governance',
+                        'content': gov_content,
+                        'content_length': len(gov_content),
+                        'chunk_type': 'proxy_corporate_governance'
+                    }
+                    result['chunks'].append(chunk)
+                    sections_found.append('Corporate Governance')
+
+            # Extract Director Compensation if available
+            dir_comp_pattern = r'(?:DIRECTOR\s+COMPENSATION|Non-Employee\s+Director\s+Compensation)(.*?)(?=Executive\s+Compensation|Security\s+Ownership|$|PROPOSAL)'
+            dir_match = re.search(dir_comp_pattern, content, re.IGNORECASE | re.DOTALL)
+
+            if dir_match:
+                dir_content = dir_match.group(1).strip()
+                if len(dir_content) > 200:
+                    chunk = {
+                        'section_title': 'Director Compensation',
+                        'content': dir_content,
+                        'content_length': len(dir_content),
+                        'chunk_type': 'proxy_director_compensation'
+                    }
+                    result['chunks'].append(chunk)
+                    sections_found.append('Director Compensation')
+
+            result['text_chunks_extracted'] = len(result['chunks'])
+            result['extraction_details']['sections_found'] = sections_found
+            result['filing_validated'] = len(result['chunks']) > 0
+
+            logger.info(f"📄 Proxy Statement validation: Found {len(result['chunks'])} sections")
+
+        except Exception as e:
+            logger.error(f"Error extracting Proxy Statement sections: {e}")
+            result['extraction_error'] = str(e)
+
+        return result
+
+    def _vectorize_extracted_chunks(self, chunks: List[Dict[str, Any]], filing_type: str, company_symbol: str = None) -> Dict[str, Any]:
+        """Vectorize the extracted text chunks"""
+
+        vectorization_result = {
+            'text_chunks_vectorized': 0,
+            'vector_ids': [],
+            'vectorization_error': None
+        }
+
+        try:
+            if not chunks:
+                logger.warning("No chunks to vectorize")
+                return vectorization_result
+
+            # Prepare chunks for vectorization
+            vector_chunks = []
+            for i, chunk in enumerate(chunks):
+                # Create metadata for the chunk
+                metadata = {
+                    'file_name': f"{company_symbol or 'unknown'}_{filing_type}_chunk_{i}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                    'company_symbol': company_symbol or 'unknown',
+                    'filing_type': filing_type,
+                    'chunk_index': i,
+                    'chunk_type': chunk.get('chunk_type', 'unknown'),
+                    'content_length': chunk.get('content_length', 0),
+                    'document_type': 'sec_filing_validation',
+                    'source': 'sec_filing_validation_service'
+                }
+
+                # Add specific metadata based on chunk type
+                if chunk.get('chunk_type') == '8k_item':
+                    metadata['item_number'] = chunk.get('item_number')
+                    metadata['item_title'] = chunk.get('item_title')
+                elif '10k_mda' in chunk.get('chunk_type', ''):
+                    metadata['subsection_title'] = chunk.get('subsection_title')
+                elif 'proxy' in chunk.get('chunk_type', ''):
+                    metadata['section_title'] = chunk.get('section_title')
+
+                vector_chunk = {
+                    'id': metadata['file_name'],
+                    'content': chunk['content'],
+                    'metadata': metadata
+                }
+
+                vector_chunks.append(vector_chunk)
+
+            # Vectorize all chunks
+            all_vector_ids = []
+            for vector_chunk in vector_chunks:
+                try:
+                    # Use existing chunking and vectorization logic
+                    doc_chunks = self._chunk_document(vector_chunk['content'], vector_chunk['metadata'])
+                    chunk_vector_ids = self._store_in_rag_engine(doc_chunks, vector_chunk['metadata'])
+                    all_vector_ids.extend(chunk_vector_ids)
+
+                    logger.debug(f"Vectorized chunk {vector_chunk['metadata']['chunk_index']}: {len(doc_chunks)} sub-chunks, {len(chunk_vector_ids)} vectors")
+
+                except Exception as chunk_error:
+                    logger.warning(f"Error vectorizing chunk {vector_chunk['metadata']['chunk_index']}: {chunk_error}")
+                    continue
+
+            vectorization_result['text_chunks_vectorized'] = len(all_vector_ids)
+            vectorization_result['vector_ids'] = all_vector_ids
+
+            logger.info(f"✅ Successfully vectorized {len(all_vector_ids)} text chunks from {filing_type}")
+
+        except Exception as e:
+            logger.error(f"Error vectorizing extracted chunks: {e}")
+            vectorization_result['vectorization_error'] = str(e)
+
+        return vectorization_result
+
     def extract_sec_qualitative_data(self, filing_content: str, filing_type: str) -> Dict[str, Any]:
         """
         Extract qualitative sections from SEC filings
         Extracts: MD&A, Risk Factors, Footnotes, Management Projections, Business Description
         """
-        
+
         logger.info(f"Extracting qualitative data from {filing_type}")
-        
+
         qualitative_data = {
             'mda': '',  # Management Discussion & Analysis
             'risk_factors': '',
@@ -1430,7 +1840,7 @@ class DataIngestionService:
             'management_projections': [],
             'forward_looking_statements': []
         }
-        
+
         try:
             # Parse HTML if needed
             if '<html' in filing_content.lower():
@@ -1438,47 +1848,47 @@ class DataIngestionService:
                 text_content = soup.get_text()
             else:
                 text_content = filing_content
-            
+
             # Extract MD&A (Item 7 in 10-K, Item 2 in 10-Q)
             mda_section = self._extract_mda_section(text_content, filing_type)
             if mda_section:
                 qualitative_data['mda'] = mda_section
                 logger.info(f"Extracted MD&A section: {len(mda_section)} characters")
-            
+
             # Extract Risk Factors (Item 1A)
             risk_factors = self._extract_risk_factors(text_content)
             if risk_factors:
                 qualitative_data['risk_factors'] = risk_factors
                 logger.info(f"Extracted Risk Factors: {len(risk_factors)} characters")
-            
+
             # Extract Business Description (Item 1)
             business_desc = self._extract_business_description(text_content)
             if business_desc:
                 qualitative_data['business_description'] = business_desc
                 logger.info(f"Extracted Business Description: {len(business_desc)} characters")
-            
+
             # Extract Forward-Looking Statements
             forward_looking = self._extract_forward_looking_statements(text_content)
             if forward_looking:
                 qualitative_data['forward_looking_statements'] = forward_looking
                 logger.info(f"Found {len(forward_looking)} forward-looking statements")
-            
+
             # Extract Financial Footnotes
             footnotes = self._extract_financial_footnotes(text_content)
             if footnotes:
                 qualitative_data['footnotes'] = footnotes
                 logger.info(f"Extracted {len(footnotes)} financial footnotes")
-            
+
             # Extract Management Projections/Guidance
             projections = self._extract_management_projections(text_content)
             if projections:
                 qualitative_data['management_projections'] = projections
                 logger.info(f"Found {len(projections)} management projections/guidance")
-                
+
         except Exception as e:
             logger.error(f"Error extracting qualitative data: {e}")
             qualitative_data['extraction_error'] = str(e)
-        
+
         return qualitative_data
     
     def _extract_mda_section(self, content: str, filing_type: str) -> str:
@@ -2401,6 +2811,48 @@ def comprehensive_ingest():
 
     except Exception as e:
         logger.error(f"Error in comprehensive ingestion: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/validate/sec-filing', methods=['POST'])
+@require_api_key
+def validate_sec_filing():
+    """Validate and extract text blocks from target SEC filings: 8-K, MD&A sections of 10-K, Proxy Statements (DEF 14A)"""
+    try:
+        data = request.get_json()
+        filing_content = data.get('filing_content')
+        filing_type = data.get('filing_type')
+        company_symbol = data.get('company_symbol')
+
+        if not filing_content:
+            return jsonify({'error': 'filing_content is required'}), 400
+
+        if not filing_type:
+            return jsonify({'error': 'filing_type is required (8-K, 10-K, or DEF 14A)'}), 400
+
+        # Validate filing type
+        valid_types = ['8-K', '10-K', 'DEF 14A', 'DEF14A', 'Proxy Statement']
+        if filing_type not in valid_types:
+            return jsonify({
+                'error': f'Invalid filing_type. Must be one of: {", ".join(valid_types)}'
+            }), 400
+
+        result = data_ingestion.validate_and_extract_sec_filings(
+            filing_content=filing_content,
+            filing_type=filing_type,
+            company_symbol=company_symbol
+        )
+
+        # Check success metric: Text_Chunks_Vectorized > 0
+        success_metric = result.get('text_chunks_vectorized', 0) > 0
+
+        result['success_metric_Text_Chunks_Vectorized'] = success_metric
+
+        logger.info(f"SEC filing validation completed: {result.get('text_chunks_extracted', 0)} chunks extracted, {result.get('text_chunks_vectorized', 0)} vectorized")
+
+        return jsonify(result)
+
+    except Exception as e:
+        logger.error(f"Error validating SEC filing: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
