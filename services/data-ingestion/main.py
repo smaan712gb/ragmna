@@ -448,8 +448,8 @@ class DataIngestionService:
                         operation_name = operation.get('name', 'unknown')
                         logger.info(f"✅ RAG import started: {operation_name}")
 
-                        # CRITICAL: Poll for completion (max 10 minutes)
-                        success = self._poll_rag_operation(operation_name, access_token, max_wait_seconds=600)
+                        # CRITICAL: Poll for completion (max 20 minutes for comprehensive vectorization)
+                        success = self._poll_rag_operation(operation_name, access_token, max_wait_seconds=1200)
 
                         if not success:
                             logger.warning(f"⚠️ RAG vectorization did not complete - vectors may not be available for analysis")
@@ -920,8 +920,467 @@ class DataIngestionService:
         except:
             return False
 
-    def _download_sec_filing(self, cik: str, accession: str, filing_info: Dict[str, Any]) -> str:
-        """Download SEC filing content"""
+    def _parse_sec_filing_html(self, html_content: str, filing_type: str) -> Dict[str, Any]:
+        """Parse SEC filing HTML to extract financial data and business information"""
+
+        logger.info(f"🔍 Parsing {filing_type} filing HTML content")
+
+        parsed_data = {
+            'filing_type': filing_type,
+            'financial_statements': {},
+            'business_description': '',
+            'mda_section': '',
+            'risk_factors': '',
+            'executive_compensation': '',
+            'corporate_governance': '',
+            'legal_proceedings': '',
+            'footnotes': [],
+            'exhibits': [],
+            'extraction_timestamp': datetime.now().isoformat()
+        }
+
+        try:
+            # Parse HTML with BeautifulSoup
+            soup = BeautifulSoup(html_content, 'html.parser')
+
+            # Remove script and style elements
+            for script in soup(["script", "style"]):
+                script.decompose()
+
+            # Get text content
+            text_content = soup.get_text()
+
+            # Extract different sections based on filing type
+            if filing_type == '10-K':
+                parsed_data.update(self._parse_10k_filing(text_content))
+            elif filing_type == '10-Q':
+                parsed_data.update(self._parse_10q_filing(text_content))
+            elif filing_type == '8-K':
+                parsed_data.update(self._parse_8k_filing(text_content))
+
+            # Extract financial statements from tables
+            financial_tables = self._extract_financial_tables(soup)
+            if financial_tables:
+                parsed_data['financial_statements'] = financial_tables
+
+            # Extract key metrics and ratios if available in tables
+            key_metrics = self._extract_key_metrics(soup)
+            if key_metrics:
+                parsed_data['key_metrics'] = key_metrics
+
+            logger.info(f"✅ Successfully parsed {filing_type} filing with {len(parsed_data.get('financial_statements', {}))} financial statements")
+
+        except Exception as e:
+            logger.error(f"❌ Error parsing SEC filing HTML: {e}")
+            parsed_data['parsing_error'] = str(e)
+
+        return parsed_data
+
+    def _parse_10k_filing(self, text_content: str) -> Dict[str, Any]:
+        """Parse 10-K filing content"""
+
+        sections = {}
+
+        # Extract Business Description (Item 1)
+        business_match = re.search(r'ITEM\s+1\.?\s+BUSINESS(.*?)ITEM\s+1A', text_content, re.IGNORECASE | re.DOTALL)
+        if business_match:
+            sections['business_description'] = business_match.group(1).strip()[:50000]  # Limit size
+
+        # Extract Risk Factors (Item 1A)
+        risk_match = re.search(r'ITEM\s+1A\.?\s+RISK\s+FACTORS(.*?)ITEM\s+1B', text_content, re.IGNORECASE | re.DOTALL)
+        if risk_match:
+            sections['risk_factors'] = risk_match.group(1).strip()[:30000]
+
+        # Extract MD&A (Item 7)
+        mda_match = re.search(r'ITEM\s+7\.?\s+MANAGEMENT.?S\s+DISCUSSION\s+AND\s+ANALYSIS(.*?)ITEM\s+7A', text_content, re.IGNORECASE | re.DOTALL)
+        if mda_match:
+            sections['mda_section'] = mda_match.group(1).strip()[:50000]
+
+        # Extract Executive Compensation (Item 11 - often in proxy statement, but check 10-K)
+        comp_match = re.search(r'ITEM\s+11\.?\s+EXECUTIVE\s+COMPENSATION(.*?)ITEM\s+12', text_content, re.IGNORECASE | re.DOTALL)
+        if comp_match:
+            sections['executive_compensation'] = comp_match.group(1).strip()[:20000]
+
+        # Extract Legal Proceedings (Item 3)
+        legal_match = re.search(r'ITEM\s+3\.?\s+LEGAL\s+PROCEEDINGS(.*?)ITEM\s+4', text_content, re.IGNORECASE | re.DOTALL)
+        if legal_match:
+            sections['legal_proceedings'] = legal_match.group(1).strip()[:20000]
+
+        return sections
+
+    def _parse_10q_filing(self, text_content: str) -> Dict[str, Any]:
+        """Parse 10-Q filing content"""
+
+        sections = {}
+
+        # Extract MD&A (Item 2)
+        mda_match = re.search(r'ITEM\s+2\.?\s+MANAGEMENT.?S\s+DISCUSSION\s+AND\s+ANALYSIS(.*?)ITEM\s+3', text_content, re.IGNORECASE | re.DOTALL)
+        if mda_match:
+            sections['mda_section'] = mda_match.group(1).strip()[:50000]
+
+        # Extract Controls and Procedures (Item 4)
+        controls_match = re.search(r'ITEM\s+4\.?\s+CONTROLS\s+AND\s+PROCEDURES(.*?)ITEM\s+5', text_content, re.IGNORECASE | re.DOTALL)
+        if controls_match:
+            sections['controls_and_procedures'] = controls_match.group(1).strip()[:20000]
+
+        # Extract Legal Proceedings (Item 1)
+        legal_match = re.search(r'ITEM\s+1\.?\s+LEGAL\s+PROCEEDINGS(.*?)ITEM\s+1A', text_content, re.IGNORECASE | re.DOTALL)
+        if legal_match:
+            sections['legal_proceedings'] = legal_match.group(1).strip()[:20000]
+
+        # Extract Risk Factors (Item 1A)
+        risk_match = re.search(r'ITEM\s+1A\.?\s+RISK\s+FACTORS(.*?)ITEM\s+2', text_content, re.IGNORECASE | re.DOTALL)
+        if risk_match:
+            sections['risk_factors'] = risk_match.group(1).strip()[:30000]
+
+        return sections
+
+    def _parse_8k_filing(self, text_content: str) -> Dict[str, Any]:
+        """Parse 8-K filing content"""
+
+        sections = {}
+
+        # 8-K filings are event-driven, extract key items
+        items = re.findall(r'ITEM\s+(\d+\.\d+).*?(?=ITEM\s+\d+\.\d+|$)', text_content, re.IGNORECASE | re.DOTALL)
+
+        for item_match in items:
+            item_num = item_match[0]
+            item_content = item_match[1].strip()[:20000]  # Limit size
+
+            if '2.02' in item_num:
+                sections['results_of_operations'] = item_content
+            elif '5.02' in item_num:
+                sections['departure_of_directors'] = item_content
+            elif '8.01' in item_num:
+                sections['other_events'] = item_content
+            elif '9.01' in item_num:
+                sections['financial_statements'] = item_content
+
+        return sections
+
+    def _extract_financial_tables(self, soup) -> Dict[str, Any]:
+        """Extract financial data from HTML tables in SEC filings using XBRL-aware parsing"""
+
+        financial_data = {}
+
+        try:
+            # Find all tables
+            tables = soup.find_all('table')
+
+            logger.info(f"Found {len(tables)} tables in SEC filing")
+
+            # SEC filings use XBRL - look for XBRL tags first
+            xbrl_elements = soup.find_all(attrs={'name': True})
+            logger.info(f"Found {len(xbrl_elements)} elements with 'name' attribute")
+
+            # Group XBRL elements by financial statement type
+            xbrl_by_statement = {
+                'balance_sheet': [],
+                'income_statement': [],
+                'cash_flow_statement': []
+            }
+
+            xbrl_count = 0
+            for elem in xbrl_elements:
+                name = elem.get('name', '').lower()
+                if 'us-gaap' in name:
+                    xbrl_count += 1
+                    if any(keyword in name for keyword in ['balancesheet', 'assets', 'liabilities', 'equity']):
+                        xbrl_by_statement['balance_sheet'].append(elem)
+                    elif any(keyword in name for keyword in ['incomestatement', 'revenue', 'income', 'expenses']):
+                        xbrl_by_statement['income_statement'].append(elem)
+                    elif any(keyword in name for keyword in ['cashflow', 'cashflows']):
+                        xbrl_by_statement['cash_flow_statement'].append(elem)
+
+            logger.info(f"Found {xbrl_count} XBRL us-gaap elements")
+            logger.info(f"XBRL breakdown - BS: {len(xbrl_by_statement['balance_sheet'])}, IS: {len(xbrl_by_statement['income_statement'])}, CF: {len(xbrl_by_statement['cash_flow_statement'])}")
+
+            # Extract data from XBRL elements
+            for statement_type, elements in xbrl_by_statement.items():
+                if elements:
+                    logger.info(f"Processing {len(elements)} XBRL elements for {statement_type}")
+                    table_data = self._extract_xbrl_financial_data(elements, statement_type)
+                    if table_data and table_data.get('data'):
+                        financial_data[statement_type] = table_data
+                        logger.info(f"✅ Extracted {statement_type} from XBRL data with {len(table_data['data'])} rows")
+                    else:
+                        logger.warning(f"❌ XBRL extraction for {statement_type} returned no data")
+
+            # Fallback: Traditional table parsing if XBRL extraction failed
+            if not financial_data:
+                logger.info("XBRL extraction failed or returned no data, falling back to traditional table parsing")
+
+                for i, table in enumerate(tables):
+                    table_type = None
+                    confidence_score = 0
+
+                    # Strategy 1: Check for XBRL tags in table
+                    xbrl_tags = table.find_all(attrs={'name': True})
+                    for tag in xbrl_tags:
+                        tag_name = tag.get('name', '').lower()
+                        if 'us-gaap' in tag_name:
+                            if any(keyword in tag_name for keyword in ['balancesheet', 'statementoffinancialposition']):
+                                table_type = 'balance_sheet'
+                                confidence_score = 95
+                                break
+                            elif any(keyword in tag_name for keyword in ['incomestatement', 'statementofoperations', 'statementofearnings']):
+                                table_type = 'income_statement'
+                                confidence_score = 95
+                                break
+                            elif any(keyword in tag_name for keyword in ['cashflow', 'statementofcashflows']):
+                                table_type = 'cash_flow_statement'
+                                confidence_score = 95
+                                break
+
+                    # Strategy 2: Enhanced table caption detection
+                    if not table_type:
+                        caption = table.find('caption')
+                        if caption:
+                            caption_text = caption.get_text().lower()
+                            if any(term in caption_text for term in ['balance sheet', 'statement of financial position', 'consolidated balance sheets']):
+                                table_type = 'balance_sheet'
+                                confidence_score = 90
+                            elif any(term in caption_text for term in ['income statement', 'statement of operations', 'statement of earnings', 'consolidated statements of income']):
+                                table_type = 'income_statement'
+                                confidence_score = 90
+                            elif any(term in caption_text for term in ['cash flow', 'statement of cash flows', 'consolidated statements of cash flows']):
+                                table_type = 'cash_flow_statement'
+                                confidence_score = 90
+
+                    # Strategy 3: Look for preceding headers and context (expanded search)
+                    if not table_type:
+                        prev_text = ""
+                        # Look much further back for context in SEC filings
+                        for prev_elem in table.find_previous_siblings(['p', 'div', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'strong', 'b'], limit=10):
+                            prev_text += prev_elem.get_text().strip() + " "
+                            if len(prev_text) > 1000:  # Allow longer search
+                                break
+
+                        prev_lower = prev_text.lower()
+                        if any(term in prev_lower for term in ['balance sheet', 'statement of financial position', 'consolidated balance sheets']):
+                            table_type = 'balance_sheet'
+                            confidence_score = 85
+                        elif any(term in prev_lower for term in ['income statement', 'statement of operations', 'statement of earnings', 'consolidated statements of income']):
+                            table_type = 'income_statement'
+                            confidence_score = 85
+                        elif any(term in prev_lower for term in ['cash flow', 'statement of cash flows', 'consolidated statements of cash flows']):
+                            table_type = 'cash_flow_statement'
+                            confidence_score = 85
+
+                    # Strategy 4: Enhanced content analysis with SEC-specific keywords
+                    if not table_type:
+                        table_text = table.get_text().lower()
+
+                        # SEC-specific financial keywords
+                        bs_keywords = ['total assets', 'total liabilities', 'stockholders equity', 'retained earnings', 'current assets', 'current liabilities', 'total equity']
+                        is_keywords = ['revenue', 'net income', 'operating income', 'gross profit', 'cost of revenue', 'net sales', 'total operating expenses']
+                        cf_keywords = ['cash flows', 'operating activities', 'investing activities', 'financing activities', 'net cash', 'cash and cash equivalents']
+
+                        bs_score = sum(1 for keyword in bs_keywords if keyword in table_text)
+                        is_score = sum(1 for keyword in is_keywords if keyword in table_text)
+                        cf_score = sum(1 for keyword in cf_keywords if keyword in table_text)
+
+                        max_score = max(bs_score, is_score, cf_score)
+                        if max_score >= 1:  # Lower threshold for SEC filings
+                            if bs_score == max_score:
+                                table_type = 'balance_sheet'
+                                confidence_score = 75
+                            elif is_score == max_score:
+                                table_type = 'income_statement'
+                                confidence_score = 75
+                            elif cf_score == max_score:
+                                table_type = 'cash_flow_statement'
+                                confidence_score = 75
+
+                    # Strategy 5: Monetary value detection with SEC formatting
+                    if not table_type:
+                        cells = table.find_all(['td', 'th'])
+                        monetary_cells = 0
+                        total_cells = len(cells)
+
+                        for cell in cells:
+                            cell_text = cell.get_text().strip()
+                            # SEC monetary patterns: $123,456 or (123,456) or 123,456 or $ (123,456)
+                            if re.search(r'[\$]?\(?\d{1,3}(?:,\d{3})*(?:\.\d+)?\)?|\(\d{1,3}(?:,\d{3})*(?:\.\d+)?\)', cell_text):
+                                monetary_cells += 1
+
+                        # SEC tables often have 20-40% monetary cells
+                        if total_cells > 0 and (monetary_cells / total_cells) > 0.2:
+                            table_text = table.get_text().lower()
+                            if any(keyword in table_text for keyword in ['assets', 'liabilities', 'equity', 'stockholders']):
+                                table_type = 'balance_sheet'
+                                confidence_score = 65
+                            elif any(keyword in table_text for keyword in ['revenue', 'income', 'expenses', 'earnings']):
+                                table_type = 'income_statement'
+                                confidence_score = 65
+                            elif any(keyword in table_text for keyword in ['cash', 'flow', 'activities', 'operating', 'investing', 'financing']):
+                                table_type = 'cash_flow_statement'
+                                confidence_score = 65
+
+                    # Parse table if we identified a type with sufficient confidence
+                    if table_type and confidence_score >= 60:
+                        parsed_table = self._parse_financial_table(table)
+                        if parsed_table and parsed_table.get('data') and len(parsed_table['data']) > 1:
+                            if table_type not in financial_data:  # Don't overwrite XBRL data
+                                financial_data[table_type] = parsed_table
+                                logger.info(f"✅ Extracted {table_type} (confidence: {confidence_score}%) with {len(parsed_table.get('data', []))} rows")
+                            elif confidence_score > 80:  # Overwrite only if much more confident
+                                financial_data[table_type] = parsed_table
+                                logger.info(f"✅ Updated {table_type} (confidence: {confidence_score}%) with {len(parsed_table.get('data', []))} rows")
+
+        except Exception as e:
+            logger.warning(f"Error extracting financial tables: {e}")
+
+        logger.info(f"Total financial statements extracted: {len(financial_data)}")
+        return financial_data
+
+    def _parse_financial_table(self, table) -> Dict[str, Any]:
+        """Parse a financial statement table"""
+
+        table_data = {}
+
+        try:
+            rows = table.find_all('tr')
+
+            # Extract headers (usually first 1-2 rows)
+            headers = []
+            for row in rows[:2]:  # Check first 2 rows for headers
+                header_cells = row.find_all(['th', 'td'])
+                if header_cells:
+                    header_row = [cell.get_text().strip() for cell in header_cells]
+                    headers.append(header_row)
+
+            # Extract data rows
+            data_rows = []
+            for row in rows[2:]:  # Skip header rows
+                cells = row.find_all(['td', 'th'])
+                if cells and len(cells) > 1:  # Must have at least account name + 1 value
+                    row_data = [cell.get_text().strip() for cell in cells]
+                    data_rows.append(row_data)
+
+            table_data = {
+                'headers': headers,
+                'data': data_rows,
+                'rows_count': len(data_rows),
+                'columns_count': len(headers[0]) if headers else 0
+            }
+
+        except Exception as e:
+            logger.warning(f"Error parsing financial table: {e}")
+
+        return table_data
+
+    def _extract_xbrl_financial_data(self, xbrl_elements: List, statement_type: str) -> Dict[str, Any]:
+        """Extract financial data from XBRL elements in SEC filings"""
+
+        logger.info(f"🔍 Extracting XBRL data for {statement_type} with {len(xbrl_elements)} elements")
+
+        table_data = {
+            'headers': [['Account', 'Value']],
+            'data': [],
+            'rows_count': 0,
+            'columns_count': 2
+        }
+
+        try:
+            # Group XBRL elements by context (period)
+            contexts = {}
+            for elem in xbrl_elements:
+                context_ref = elem.get('contextref', '')
+                name = elem.get('name', '').lower()
+                unit_ref = elem.get('unitref', '')
+                content = elem.get_text().strip()
+
+                # Parse the context to get period information
+                if context_ref:
+                    if context_ref not in contexts:
+                        contexts[context_ref] = {}
+
+                    # Extract financial value
+                    try:
+                        # Remove commas and convert to float
+                        value = float(content.replace(',', '').replace('$', ''))
+                        contexts[context_ref][name] = value
+                    except (ValueError, AttributeError):
+                        # If not numeric, store as string
+                        contexts[context_ref][name] = content
+
+            # Convert contexts to table format
+            if contexts:
+                # Get all unique account names
+                all_accounts = set()
+                for context_data in contexts.values():
+                    all_accounts.update(context_data.keys())
+
+                # Create rows for each account
+                for account in sorted(all_accounts):
+                    row = [account]  # Account name
+
+                    # Add values for each context (period)
+                    for context_ref in sorted(contexts.keys()):
+                        context_data = contexts[context_ref]
+                        value = context_data.get(account, '')
+                        if isinstance(value, float):
+                            # Format large numbers
+                            if abs(value) >= 1e9:
+                                row.append(f"${value/1e9:.2f}B")
+                            elif abs(value) >= 1e6:
+                                row.append(f"${value/1e6:.1f}M")
+                            elif abs(value) >= 1e3:
+                                row.append(f"${value/1e3:.0f}K")
+                            else:
+                                row.append(f"${value:.2f}")
+                        else:
+                            row.append(str(value))
+
+                    table_data['data'].append(row)
+
+                table_data['rows_count'] = len(table_data['data'])
+                table_data['columns_count'] = len(table_data['data'][0]) if table_data['data'] else 2
+
+                logger.info(f"✅ Extracted {table_data['rows_count']} XBRL accounts for {statement_type}")
+
+        except Exception as e:
+            logger.warning(f"Error extracting XBRL data: {e}")
+
+        return table_data
+
+    def _extract_key_metrics(self, soup) -> Dict[str, Any]:
+        """Extract key financial metrics and ratios from the filing"""
+
+        metrics = {}
+
+        try:
+            # Look for common financial metrics in text
+            text_content = soup.get_text()
+
+            # Revenue patterns
+            revenue_matches = re.findall(r'(?:total\s+)?revenue[^\d]*\$?([\d,]+(?:\.\d+)?)\s*(?:million|billion|m|b)', text_content, re.IGNORECASE)
+            if revenue_matches:
+                metrics['revenue_mentions'] = revenue_matches[:5]  # Limit to 5 mentions
+
+            # Net income patterns
+            net_income_matches = re.findall(r'net\s+(?:income|loss|earnings)[^\d]*\$?([\d,]+(?:\.\d+)?)\s*(?:million|billion|m|b)', text_content, re.IGNORECASE)
+            if net_income_matches:
+                metrics['net_income_mentions'] = net_income_matches[:5]
+
+            # EPS patterns
+            eps_matches = re.findall(r'(?:earnings|eps)[^\d]*\$?([\d.]+)\s*(?:per\s+share)?', text_content, re.IGNORECASE)
+            if eps_matches:
+                metrics['eps_mentions'] = eps_matches[:5]
+
+            # Market cap or valuation mentions
+            market_cap_matches = re.findall(r'market\s+cap(?:italization)?[^\d]*\$?([\d,]+(?:\.\d+)?)\s*(?:million|billion|m|b)', text_content, re.IGNORECASE)
+            if market_cap_matches:
+                metrics['market_cap_mentions'] = market_cap_matches[:3]
+
+        except Exception as e:
+            logger.warning(f"Error extracting key metrics: {e}")
+
+        return metrics
+
+    def _download_sec_filing(self, cik: str, accession: str, filing_info: Dict[str, Any]) -> Dict[str, Any]:
+        """Download and parse SEC filing content to extract financial data and business information"""
         try:
             base_url = "https://www.sec.gov/Archives/edgar/data"
             filing_url = f"{base_url}/{cik}/{accession}/{filing_info.get('primary_document', '')}"
@@ -935,11 +1394,25 @@ class DataIngestionService:
             response = requests.get(filing_url, headers=headers, timeout=60)
             response.raise_for_status()
 
-            return response.text
+            html_content = response.text
+
+            # Parse the HTML content to extract structured financial data
+            parsed_data = self._parse_sec_filing_html(html_content, filing_info.get('form_type', ''))
+
+            return {
+                'raw_html': html_content,
+                'parsed_data': parsed_data,
+                'filing_type': filing_info.get('form_type', ''),
+                'accession_number': accession
+            }
 
         except Exception as e:
             logger.error(f"Error downloading SEC filing {accession}: {e}")
-            return ''
+            return {
+                'error': str(e),
+                'filing_type': filing_info.get('form_type', ''),
+                'accession_number': accession
+            }
 
     def extract_sec_qualitative_data(self, filing_content: str, filing_type: str) -> Dict[str, Any]:
         """
@@ -1311,6 +1784,14 @@ class DataIngestionService:
                 vectorization_results['chunks_created'] += yf_results.get('chunks_created', 0)
                 vectorization_results['vectors_stored'] += yf_results.get('vectors_stored', 0)
 
+            # NEW: Process social media data
+            if 'social_media' in fetched_data:
+                social_results = self._process_social_media_for_vectorization(symbol, fetched_data['social_media'], cik)
+                vectorization_results['processing_details']['social_media'] = social_results
+                vectorization_results['total_documents'] += social_results.get('items_processed', 0)
+                vectorization_results['chunks_created'] += social_results.get('chunks_created', 0)
+                vectorization_results['vectors_stored'] += social_results.get('vectors_stored', 0)
+
         except Exception as e:
             logger.error(f"Error in data processing and vectorization: {e}")
             vectorization_results['error'] = str(e)
@@ -1488,12 +1969,14 @@ class DataIngestionService:
 
         filings = sec_data.get('filings', [])
         for filing in filings:
-            if 'content' in filing and filing['content']:
+            if 'parsed_data' in filing and filing['parsed_data']:
+                parsed_data = filing['parsed_data']
+
                 # Create proper metadata with file_name
                 file_identifier = f"{symbol}_{filing.get('form_type', 'filing')}_{filing.get('filing_date', 'unknown')}"
-                
+
                 metadata = {
-                    'file_name': file_identifier,  # FIXED: Add file_name
+                    'file_name': file_identifier,
                     'symbol': symbol,
                     'cik': sec_data.get('cik', ''),
                     'form_type': filing.get('form_type', ''),
@@ -1503,13 +1986,121 @@ class DataIngestionService:
                     'source': 'sec_edgar'
                 }
 
-                # Chunk and vectorize
-                chunks = self._chunk_document(filing['content'], metadata)
+                # Build comprehensive content from parsed data
+                content_parts = []
+
+                # Add filing header
+                content_parts.append(f"=== SEC {filing.get('form_type', 'Unknown')} FILING ===\n")
+                content_parts.append(f"Company: {symbol}")
+                content_parts.append(f"CIK: {sec_data.get('cik', 'Unknown')}")
+                content_parts.append(f"Filing Date: {filing.get('filing_date', 'Unknown')}")
+                content_parts.append(f"Accession Number: {filing.get('accession_number', 'Unknown')}\n")
+
+                # Add business description
+                if parsed_data.get('business_description'):
+                    content_parts.append("=== BUSINESS DESCRIPTION ===\n")
+                    content_parts.append(parsed_data['business_description'][:10000])  # Limit size
+                    content_parts.append("")
+
+                # Add MD&A section
+                if parsed_data.get('mda_section'):
+                    content_parts.append("=== MANAGEMENT DISCUSSION & ANALYSIS (MD&A) ===\n")
+                    content_parts.append(parsed_data['mda_section'][:15000])  # Limit size
+                    content_parts.append("")
+
+                # Add risk factors
+                if parsed_data.get('risk_factors'):
+                    content_parts.append("=== RISK FACTORS ===\n")
+                    content_parts.append(parsed_data['risk_factors'][:10000])  # Limit size
+                    content_parts.append("")
+
+                # Add financial statements data
+                if parsed_data.get('financial_statements'):
+                    financials = parsed_data['financial_statements']
+
+                    if 'income_statement' in financials and financials['income_statement'].get('data'):
+                        content_parts.append("=== INCOME STATEMENT DATA ===\n")
+                        income_data = financials['income_statement']['data'][:10]  # First 10 rows
+                        for row in income_data:
+                            if len(row) >= 2:
+                                account = row[0]
+                                values = row[1:]
+                                content_parts.append(f"{account}: {', '.join(str(v) for v in values)}")
+                        content_parts.append("")
+
+                    if 'balance_sheet' in financials and financials['balance_sheet'].get('data'):
+                        content_parts.append("=== BALANCE SHEET DATA ===\n")
+                        bs_data = financials['balance_sheet']['data'][:15]  # First 15 rows
+                        for row in bs_data:
+                            if len(row) >= 2:
+                                account = row[0]
+                                values = row[1:]
+                                content_parts.append(f"{account}: {', '.join(str(v) for v in values)}")
+                        content_parts.append("")
+
+                    if 'cash_flow_statement' in financials and financials['cash_flow_statement'].get('data'):
+                        content_parts.append("=== CASH FLOW STATEMENT DATA ===\n")
+                        cf_data = financials['cash_flow_statement']['data'][:10]  # First 10 rows
+                        for row in cf_data:
+                            if len(row) >= 2:
+                                account = row[0]
+                                values = row[1:]
+                                content_parts.append(f"{account}: {', '.join(str(v) for v in values)}")
+                        content_parts.append("")
+
+                # Add key metrics
+                if parsed_data.get('key_metrics'):
+                    content_parts.append("=== KEY FINANCIAL METRICS ===\n")
+                    metrics = parsed_data['key_metrics']
+                    if metrics.get('revenue_mentions'):
+                        content_parts.append(f"Revenue Mentions: {', '.join(metrics['revenue_mentions'][:3])}")
+                    if metrics.get('net_income_mentions'):
+                        content_parts.append(f"Net Income Mentions: {', '.join(metrics['net_income_mentions'][:3])}")
+                    if metrics.get('eps_mentions'):
+                        content_parts.append(f"EPS Mentions: {', '.join(metrics['eps_mentions'][:3])}")
+                    content_parts.append("")
+
+                # Add other sections
+                if parsed_data.get('executive_compensation'):
+                    content_parts.append("=== EXECUTIVE COMPENSATION ===\n")
+                    content_parts.append(parsed_data['executive_compensation'][:5000])
+                    content_parts.append("")
+
+                if parsed_data.get('legal_proceedings'):
+                    content_parts.append("=== LEGAL PROCEEDINGS ===\n")
+                    content_parts.append(parsed_data['legal_proceedings'][:5000])
+                    content_parts.append("")
+
+                if parsed_data.get('corporate_governance'):
+                    content_parts.append("=== CORPORATE GOVERNANCE ===\n")
+                    content_parts.append(parsed_data['corporate_governance'][:5000])
+                    content_parts.append("")
+
+                # Add footnotes summary
+                if parsed_data.get('footnotes'):
+                    content_parts.append("=== FINANCIAL STATEMENT FOOTNOTES ===\n")
+                    footnotes = parsed_data['footnotes'][:5]  # First 5 footnotes
+                    for footnote in footnotes:
+                        content_parts.append(f"Note {footnote.get('note_number', '?')}: {footnote.get('content', '')[:1000]}...")
+                    content_parts.append("")
+
+                # Combine all content
+                content = "\n".join(content_parts)
+
+                # Skip if content is too short (likely parsing failed)
+                if len(content) < 500:
+                    logger.warning(f"⚠️ SEC filing content too short for {symbol}, skipping vectorization")
+                    continue
+
+                # Chunk and vectorize the structured content
+                chunks = self._chunk_document(content, metadata)
                 vector_ids = self._store_in_rag_engine(chunks, metadata)
 
                 results['filings_processed'] += 1
                 results['chunks_created'] += len(chunks)
                 results['vectors_stored'] += len(vector_ids)
+
+                logger.info(f"✅ Vectorized SEC filing {filing.get('form_type')} for {symbol}: {len(chunks)} chunks")
 
         return results
 
@@ -1579,6 +2170,78 @@ class DataIngestionService:
 
         return results
 
+    def _process_social_media_for_vectorization(self, symbol: str, social_data: Dict[str, Any], cik: str = None) -> Dict[str, Any]:
+        """Process social media data for vectorization"""
+        
+        logger.info(f"📱 Processing social media data for vectorization: {symbol}")
+        
+        results = {'items_processed': 0, 'chunks_created': 0, 'vectors_stored': 0}
+        
+        # Check if social media data is available
+        twitter_mentions = social_data.get('twitter_mentions', [])
+        reddit_posts = social_data.get('reddit_posts', [])
+        sentiment_score = social_data.get('sentiment_score', 0.0)
+        total_mentions = social_data.get('total_mentions', 0)
+        
+        # If no actual data, create a placeholder document for future use
+        if not twitter_mentions and not reddit_posts and total_mentions == 0:
+            logger.info(f"ℹ️  No social media data available for {symbol} - creating placeholder")
+            content = f"""
+Social Media Monitoring for {symbol}
+
+Sentiment Score: {sentiment_score}
+Total Mentions: {total_mentions}
+
+Note: {social_data.get('note', 'Social media integration pending API configuration')}
+
+This document serves as a placeholder for future social media sentiment analysis.
+"""
+        else:
+            # Process actual social media data
+            content_parts = [f"=== SOCIAL MEDIA ANALYSIS FOR {symbol} ===\n"]
+            
+            # Add sentiment summary
+            content_parts.append(f"Overall Sentiment Score: {sentiment_score:.2f}")
+            content_parts.append(f"Total Mentions: {total_mentions}\n")
+            
+            # Process Twitter mentions
+            if twitter_mentions:
+                content_parts.append("=== TWITTER MENTIONS ===\n")
+                for idx, mention in enumerate(twitter_mentions[:50], 1):
+                    content_parts.append(f"{idx}. {mention.get('text', '')} (Date: {mention.get('date', 'Unknown')})\n")
+                content_parts.append("")
+            
+            # Process Reddit posts
+            if reddit_posts:
+                content_parts.append("=== REDDIT DISCUSSIONS ===\n")
+                for idx, post in enumerate(reddit_posts[:50], 1):
+                    content_parts.append(f"{idx}. {post.get('title', '')} - {post.get('text', '')} (Date: {post.get('date', 'Unknown')})\n")
+            
+            content = "\n".join(content_parts)
+        
+        file_identifier = f"{symbol}_social_media_{datetime.now().strftime('%Y%m%d')}"
+        
+        metadata = {
+            'file_name': file_identifier,
+            'symbol': symbol,
+            'company_cik': cik or symbol,
+            'document_type': 'social_media',
+            'source': 'social_media_apis',
+            'sentiment_score': sentiment_score,
+            'total_mentions': total_mentions
+        }
+        
+        chunks = self._chunk_document(content, metadata)
+        vector_ids = self._store_in_rag_engine(chunks, metadata)
+        
+        logger.info(f"✅ Vectorized social media data: {len(chunks)} chunks, {len(vector_ids)} vectors")
+        
+        results['items_processed'] = len(twitter_mentions) + len(reddit_posts) if (twitter_mentions or reddit_posts) else 1
+        results['chunks_created'] = len(chunks)
+        results['vectors_stored'] = len(vector_ids)
+        
+        return results
+
     def update_company_data(self, symbol: str, data_type: str) -> Dict[str, Any]:
         """Update company data from external sources (legacy method)"""
         return self.fetch_company_data(symbol, [data_type] if data_type != 'all' else None)
@@ -1604,6 +2267,50 @@ def health_check():
         'service': 'data-ingestion',
         'version': '1.0.0'
     })
+
+@app.route('/data/vectors/<symbol>', methods=['GET'])
+@require_api_key
+def get_vectors(symbol):
+    """
+    Get vectorized data for a symbol from RAG
+    This endpoint retrieves all RAG vectors for due diligence analysis
+    """
+    try:
+        import sys
+        import os
+        sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+        from shared.rag_helper import rag_helper
+
+        # Get vectors from RAG
+        vectors = rag_helper.get_vectors_by_symbol(symbol)
+
+        if vectors.get('contexts_retrieved', 0) == 0:
+            logger.warning(f"⚠️ No vectors found for {symbol}")
+            return jsonify({
+                'symbol': symbol,
+                'vectors': {},
+                'contexts_retrieved': 0,
+                'message': f'No vectorized data found for {symbol}. Data may not have been ingested yet.'
+            }), 200  # 200 instead of 404 so DD agent doesn't error
+
+        logger.info(f"✅ Retrieved {vectors['contexts_retrieved']} vectors for {symbol}")
+
+        return jsonify({
+            'symbol': symbol,
+            'vectors': vectors,
+            'contexts_retrieved': vectors.get('contexts_retrieved', 0),
+            'retrieved_at': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Error retrieving vectors for {symbol}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'error': str(e),
+            'symbol': symbol,
+            'contexts_retrieved': 0
+        }), 500
 
 @app.route('/ingest/sec-filing', methods=['POST'])
 @require_api_key
